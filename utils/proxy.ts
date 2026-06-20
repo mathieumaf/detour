@@ -1,0 +1,60 @@
+// Shared proxy model + persistence. Single source of truth for the popup and
+// the background service worker, kept in sync through chrome.storage.local.
+
+export type ProxyScheme = 'http' | 'https' | 'socks4' | 'socks5';
+
+export interface ProxyProfile {
+  scheme: ProxyScheme;
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+}
+
+export interface ProxyState {
+  enabled: boolean;
+  profile: ProxyProfile;
+}
+
+export const STORAGE_KEY = 'proxyState';
+
+export const DEFAULT_PROFILE: ProxyProfile = {
+  scheme: 'http',
+  host: '',
+  port: 8080,
+  username: '',
+  password: '',
+};
+
+export const DEFAULT_STATE: ProxyState = {
+  enabled: false,
+  profile: { ...DEFAULT_PROFILE },
+};
+
+// HTTP/HTTPS proxy credentials can be supplied via webRequest.onAuthRequired.
+// Chrome has no way to authenticate SOCKS proxies, so we surface that in the UI.
+export function authSupported(scheme: ProxyScheme): boolean {
+  return scheme === 'http' || scheme === 'https';
+}
+
+export function isProfileValid(p: ProxyProfile): boolean {
+  return (
+    p.host.trim() !== '' &&
+    Number.isInteger(p.port) &&
+    p.port >= 1 &&
+    p.port <= 65535
+  );
+}
+
+export async function loadState(): Promise<ProxyState> {
+  const res = await chrome.storage.local.get(STORAGE_KEY);
+  const stored = res[STORAGE_KEY] as Partial<ProxyState> | undefined;
+  return {
+    enabled: stored?.enabled ?? DEFAULT_STATE.enabled,
+    profile: { ...DEFAULT_PROFILE, ...stored?.profile },
+  };
+}
+
+export async function saveState(state: ProxyState): Promise<void> {
+  await chrome.storage.local.set({ [STORAGE_KEY]: state });
+}
