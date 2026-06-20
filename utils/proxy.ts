@@ -16,6 +16,13 @@ export interface ProxyState {
   profile: ProxyProfile;
 }
 
+export interface TestResult {
+  ok: boolean;
+  ip?: string;
+  ms?: number;
+  error?: string;
+}
+
 export const STORAGE_KEY = 'proxyState';
 
 export const DEFAULT_PROFILE: ProxyProfile = {
@@ -57,4 +64,9 @@ export async function loadState(): Promise<ProxyState> {
 
 export async function saveState(state: ProxyState): Promise<void> {
   await chrome.storage.local.set({ [STORAGE_KEY]: state });
+}
+
+// Ask the background worker to test the given profile and report the exit IP.
+export function testProxy(profile: ProxyProfile): Promise<TestResult> {
+  return chrome.runtime.sendMessage({ type: 'test-proxy', profile }) as Promise<TestResult>;
 }

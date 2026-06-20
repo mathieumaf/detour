@@ -3,11 +3,13 @@ import { reactive, ref, computed, onMounted } from 'vue';
 import {
   loadState,
   saveState,
+  testProxy,
   authSupported,
   isProfileValid,
   DEFAULT_PROFILE,
   type ProxyProfile,
   type ProxyScheme,
+  type TestResult,
 } from '@/utils/proxy';
 
 const SCHEMES: { value: ProxyScheme; label: string }[] = [
@@ -20,6 +22,8 @@ const SCHEMES: { value: ProxyScheme; label: string }[] = [
 const enabled = ref(false);
 const profile = reactive<ProxyProfile>({ ...DEFAULT_PROFILE });
 const controlWarning = ref('');
+const testing = ref(false);
+const testResult = ref<TestResult | null>(null);
 
 const valid = computed(() => isProfileValid(profile));
 const supportsAuth = computed(() => authSupported(profile.scheme));
@@ -32,10 +36,25 @@ onMounted(async () => {
 });
 
 async function save() {
+  // Editing the target invalidates any previous test result.
+  testResult.value = null;
   // Can't be active with an invalid target — flip off rather than apply garbage.
   if (enabled.value && !valid.value) enabled.value = false;
   await saveState({ enabled: enabled.value, profile: { ...profile } });
   void checkControl();
+}
+
+async function runTest() {
+  if (!valid.value || testing.value) return;
+  testing.value = true;
+  testResult.value = null;
+  try {
+    testResult.value = await testProxy({ ...profile });
+  } catch (err) {
+    testResult.value = { ok: false, error: (err as Error)?.message || 'Test failed.' };
+  } finally {
+    testing.value = false;
+  }
 }
 
 async function toggle() {
@@ -140,6 +159,27 @@ async function checkControl() {
         ignored for SOCKS.
       </p>
       <p v-if="controlWarning" class="note warn">{{ controlWarning }}</p>
+
+      <div class="test">
+        <button
+          class="test-btn"
+          type="button"
+          :disabled="!valid || testing"
+          @click="runTest"
+        >
+          {{ testing ? 'Testing…' : 'Test connection' }}
+        </button>
+        <p
+          v-if="testResult"
+          class="result"
+          :class="testResult.ok ? 'ok' : 'fail'"
+        >
+          <template v-if="testResult.ok">
+            ✓ Connected · {{ testResult.ip }} · {{ testResult.ms }} ms
+          </template>
+          <template v-else>✗ {{ testResult.error }}</template>
+        </p>
+      </div>
     </form>
   </main>
 </template>
@@ -295,6 +335,49 @@ input:disabled {
 }
 
 .note.warn {
+  color: var(--warn);
+}
+
+.test {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.test-btn {
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--fg);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.test-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.test-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.result {
+  margin: 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.result.ok {
+  color: var(--accent);
+}
+
+.result.fail {
   color: var(--warn);
 }
 </style>
