@@ -1,0 +1,21 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22c55e"/>
+      <stop offset="1" stop-color="#15803d"/>
+    </linearGradient>
+  </defs>
+
+  <!-- App-icon rounded square -->
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+
+  <!-- Detour: start at a point, run right, then reroute upward -->
+  <g fill="none" stroke="#ffffff" stroke-width="14"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M38 84 H72 V46"/>
+    <path d="M54 60 L72 42 L90 60"/>
+  </g>
+
+  <!-- Origin point -->
+  <circle cx="38" cy="84" r="9" fill="#ffffff"/>
+</svg>
