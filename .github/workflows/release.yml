@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  release-please:
+    name: Release Please
+    runs-on: ubuntu-latest
+    steps:
+      # Maintains a release PR (version bump + CHANGELOG). On merge it tags and
+      # creates the GitHub Release; release_created flips true on that run.
+      - uses: googleapis/release-please-action@v5
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # Everything below runs only on the run that just published a release,
+      # building the store packages and attaching them to it.
+      - uses: actions/checkout@v7
+        if: ${{ steps.release.outputs.release_created }}
+
+      - uses: oven-sh/setup-bun@v2.2.0
+        if: ${{ steps.release.outputs.release_created }}
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        if: ${{ steps.release.outputs.release_created }}
+        run: bun install --frozen-lockfile
+
+      - name: Build and zip both targets
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          bun run zip
+          bun run zip:firefox
+
+      - name: Attach packages to the release
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ steps.release.outputs.tag_name }}" .output/*.zip --clobber

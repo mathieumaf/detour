@@ -1,6 +1,6 @@
 {
-  "name": "wxt-vue-starter",
-  "description": "manifest.json description",
+  "name": "detour",
+  "description": "Simple proxy switcher — HTTP, HTTPS, SOCKS4/5 with authentication.",
   "private": true,
   "version": "0.0.0",
   "type": "module",
