@@ -38,9 +38,11 @@ export const DEFAULT_STATE: ProxyState = {
   profile: { ...DEFAULT_PROFILE },
 };
 
-// HTTP/HTTPS proxy credentials can be supplied via webRequest.onAuthRequired.
-// Chrome has no way to authenticate SOCKS proxies, so we surface that in the UI.
+// Whether the current browser can authenticate a proxy of this scheme.
+// Firefox authenticates every scheme (SOCKS credentials ride in ProxyInfo);
+// Chromium can only authenticate HTTP/HTTPS proxies, never SOCKS.
 export function authSupported(scheme: ProxyScheme): boolean {
+  if (import.meta.env.FIREFOX) return true;
   return scheme === 'http' || scheme === 'https';
 }
 
