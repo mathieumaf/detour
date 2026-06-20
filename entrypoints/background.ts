@@ -8,16 +8,16 @@ import {
   type TestResult,
 } from '@/utils/proxy';
 
-// In-memory mirror of the persisted state. The service worker can be torn down
-// and restarted at any time, so we always rehydrate from storage on startup.
+// In-memory mirror of the persisted state. The worker can be torn down and
+// restarted at any time, so we always rehydrate from storage on startup.
 let state: ProxyState;
 
 // While a connectivity test runs, this holds the profile being tried so the
-// auth handler uses its credentials instead of the saved ones.
+// auth path uses its credentials instead of the saved ones.
 let testProfile: ProxyProfile | null = null;
 
 // Tracks requests we've already answered an auth challenge for, so that wrong
-// credentials don't trigger an infinite re-prompt loop.
+// credentials don't trigger an infinite re-prompt loop (Chromium / HTTP proxies).
 const handledAuth = new Set<string>();
 
 export default defineBackground(() => {
@@ -38,13 +38,7 @@ async function init() {
     });
   });
 
-  // Supply proxy credentials for HTTP/HTTPS proxies. Requires the
-  // `webRequestAuthProvider` permission (MV3) to run without webRequestBlocking.
-  chrome.webRequest.onAuthRequired.addListener(
-    handleAuth,
-    { urls: ['<all_urls>'] },
-    ['asyncBlocking'],
-  );
+  registerAuthHandler();
 
   // Connectivity test requested from the popup.
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
@@ -66,7 +60,46 @@ async function applyState(s: ProxyState) {
   }
 }
 
+// --- Proxy engine -----------------------------------------------------------
+// Two backends behind one contract: Chromium drives the global
+// `proxy.settings`; Firefox registers a per-request `proxy.onRequest` listener,
+// which is the only API that can authenticate SOCKS proxies.
+
+// Firefox-only: the currently registered onRequest listener, if any.
+let firefoxListener: ((details: unknown) => FirefoxProxyInfo) | null = null;
+
+interface FirefoxProxyInfo {
+  type: 'http' | 'https' | 'socks' | 'socks4';
+  host: string;
+  port: number;
+  username?: string;
+  password?: string;
+  proxyDNS?: boolean;
+}
+
+function toFirefoxProxyInfo(p: ProxyProfile): FirefoxProxyInfo {
+  // Firefox uses "socks" for SOCKS5 and carries credentials inline.
+  const type =
+    p.scheme === 'socks5' ? 'socks' : p.scheme === 'socks4' ? 'socks4' : p.scheme;
+  const info: FirefoxProxyInfo = { type, host: p.host.trim(), port: p.port };
+  if (p.username) {
+    info.username = p.username;
+    info.password = p.password;
+  }
+  if (type === 'socks') info.proxyDNS = true; // resolve DNS through the proxy
+  return info;
+}
+
 async function enableProxy(p: ProxyProfile) {
+  if (import.meta.env.FIREFOX) {
+    const proxyApi = browser.proxy as any;
+    if (firefoxListener) proxyApi.onRequest.removeListener(firefoxListener);
+    const info = toFirefoxProxyInfo(p);
+    firefoxListener = () => info;
+    proxyApi.onRequest.addListener(firefoxListener, { urls: ['<all_urls>'] });
+    return;
+  }
+
   await chrome.proxy.settings.set({
     scope: 'regular',
     value: {
@@ -80,34 +113,66 @@ async function enableProxy(p: ProxyProfile) {
 }
 
 async function disableProxy() {
+  if (import.meta.env.FIREFOX) {
+    if (firefoxListener) {
+      (browser.proxy as any).onRequest.removeListener(firefoxListener);
+      firefoxListener = null;
+    }
+    return;
+  }
+
   // Release control so the browser falls back to the system proxy settings.
   await chrome.proxy.settings.clear({ scope: 'regular' });
 }
 
-function handleAuth(
+// --- Proxy authentication (HTTP/HTTPS) --------------------------------------
+// SOCKS auth is handled inline by Firefox's ProxyInfo above; Chromium can't do
+// SOCKS auth at all. This path covers HTTP/HTTPS proxy challenges on both.
+
+function registerAuthHandler() {
+  if (import.meta.env.FIREFOX) {
+    chrome.webRequest.onAuthRequired.addListener(
+      resolveAuth,
+      { urls: ['<all_urls>'] },
+      ['blocking'],
+    );
+  } else {
+    // MV3 Chromium: `asyncBlocking` + the `webRequestAuthProvider` permission.
+    chrome.webRequest.onAuthRequired.addListener(
+      (
+        details,
+        asyncCallback,
+      ): chrome.webRequest.BlockingResponse | undefined => {
+        asyncCallback?.(resolveAuth(details));
+        return undefined;
+      },
+      { urls: ['<all_urls>'] },
+      ['asyncBlocking'],
+    );
+  }
+}
+
+function resolveAuth(
   details: chrome.webRequest.OnAuthRequiredDetails,
-  asyncCallback?: (response: chrome.webRequest.BlockingResponse) => void,
-): chrome.webRequest.BlockingResponse | undefined {
-  const done = asyncCallback ?? (() => {});
+): chrome.webRequest.BlockingResponse {
   // A running test takes precedence; otherwise use the saved profile if active.
   const p = testProfile ?? (state?.enabled ? state.profile : null);
 
-  // Only answer proxy challenges when we have credentials we can supply.
   if (!details.isProxy || !p || !authSupported(p.scheme) || !p.username) {
-    done({});
-    return;
+    return {};
   }
 
   // Already tried for this request → the credentials are wrong; stop here.
   if (handledAuth.has(details.requestId)) {
     handledAuth.delete(details.requestId);
-    done({ cancel: true });
-    return;
+    return { cancel: true };
   }
 
   handledAuth.add(details.requestId);
-  done({ authCredentials: { username: p.username, password: p.password } });
+  return { authCredentials: { username: p.username, password: p.password } };
 }
+
+// --- Connectivity test ------------------------------------------------------
 
 // Temporarily route through the given profile, fetch our exit IP, then restore
 // the previous proxy state. Lets the user verify a proxy before enabling it.
@@ -137,9 +202,8 @@ async function testProxy(profile: ProxyProfile): Promise<TestResult> {
       clearTimeout(timer);
     }
   } catch (err) {
-    const name = (err as Error)?.name;
     const message =
-      name === 'AbortError'
+      (err as Error)?.name === 'AbortError'
         ? 'Timed out after 8s.'
         : (err as Error)?.message || 'Connection failed.';
     return { ok: false, error: message };
