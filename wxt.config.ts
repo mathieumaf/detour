@@ -24,7 +24,14 @@ export default defineConfig({
       action: { default_title: 'Detour' },
       ...(firefox && {
         browser_specific_settings: {
-          gecko: { id: 'detour@digilac.ch', strict_min_version: '109.0' },
+          gecko: {
+            // data_collection_permissions lands in Firefox 140, so require it.
+            id: 'detour@digilac.ch',
+            strict_min_version: '140.0',
+            // Required by AMO for new add-ons. Detour collects no data:
+            // credentials stay in local storage and nothing is sent to us.
+            data_collection_permissions: { required: ['none'] },
+          },
         },
       }),
     };
