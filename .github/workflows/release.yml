@@ -4,6 +4,13 @@ on:
   push:
     branches: [main]
 
+# Serialize Release runs: release-please isn't safe to run concurrently (two
+# overlapping runs race to create the same tag → "already_exists"). Never cancel
+# a run mid-release — queue the next one so it sees the finished state instead.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 permissions:
   contents: write
   pull-requests: write
