@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/mathieumaf/detour/compare/detour-v1.1.0...detour-v1.2.0) (2026-06-24)
+
+
+### Features
+
+* **proxy:** IP/CIDR bypass matching and a &lt;private&gt; shorthand ([#17](https://github.com/mathieumaf/detour/issues/17)) ([27077c8](https://github.com/mathieumaf/detour/commit/27077c818cc1fd75f01e0b40b4272e7a2ece77c1))
+
 ## [1.1.0](https://github.com/mathieumaf/detour/compare/detour-v1.0.1...detour-v1.1.0) (2026-06-24)
 
 
