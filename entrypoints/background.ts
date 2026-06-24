@@ -2,6 +2,7 @@ import {
   loadState,
   isProfileValid,
   authSupported,
+  isBypassed,
   STORAGE_KEY,
   type ProxyState,
   type ProxyProfile,
@@ -66,7 +67,10 @@ async function applyState(s: ProxyState) {
 // which is the only API that can authenticate SOCKS proxies.
 
 // Firefox-only: the currently registered onRequest listener, if any.
-let firefoxListener: ((details: unknown) => FirefoxProxyInfo) | null = null;
+type FirefoxProxyResult = FirefoxProxyInfo | { type: 'direct' };
+let firefoxListener:
+  | ((details: { url: string }) => FirefoxProxyResult)
+  | null = null;
 
 interface FirefoxProxyInfo {
   type: 'http' | 'https' | 'socks' | 'socks4';
@@ -95,7 +99,11 @@ async function enableProxy(p: ProxyProfile) {
     const proxyApi = browser.proxy as any;
     if (firefoxListener) proxyApi.onRequest.removeListener(firefoxListener);
     const info = toFirefoxProxyInfo(p);
-    firefoxListener = () => info;
+    const bypass = p.bypassList;
+    // Chromium honours bypassList natively; Firefox doesn't, so route bypassed
+    // hosts directly here and everything else through the proxy.
+    firefoxListener = ({ url }) =>
+      isBypassed(url, bypass) ? { type: 'direct' } : info;
     proxyApi.onRequest.addListener(firefoxListener, { urls: ['<all_urls>'] });
     return;
   }
@@ -106,7 +114,7 @@ async function enableProxy(p: ProxyProfile) {
       mode: 'fixed_servers',
       rules: {
         singleProxy: { scheme: p.scheme, host: p.host.trim(), port: p.port },
-        bypassList: ['<local>'],
+        bypassList: p.bypassList,
       },
     },
   });

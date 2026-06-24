@@ -6,6 +6,8 @@ import {
   testProxy,
   authSupported,
   isProfileValid,
+  parseBypassList,
+  formatBypassList,
   DEFAULT_PROFILE,
   type ProxyProfile,
   type ProxyScheme,
@@ -21,6 +23,8 @@ const SCHEMES: { value: ProxyScheme; label: string }[] = [
 
 const enabled = ref(false);
 const profile = reactive<ProxyProfile>({ ...DEFAULT_PROFILE });
+// Raw textarea content; parsed into profile.bypassList on save.
+const bypassText = ref('');
 const controlWarning = ref('');
 const testing = ref(false);
 const testResult = ref<TestResult | null>(null);
@@ -32,15 +36,32 @@ onMounted(async () => {
   const s = await loadState();
   enabled.value = s.enabled;
   Object.assign(profile, s.profile);
+  bypassText.value = formatBypassList(profile.bypassList);
   void checkControl();
 });
+
+// A plain, fully-detached copy of the profile. Vue's reactive() wraps nested
+// objects (here, bypassList) in Proxies, which the structured-clone used by
+// chrome.storage / sendMessage can't serialize — so we rebuild a flat object.
+function snapshot(): ProxyProfile {
+  return {
+    scheme: profile.scheme,
+    host: profile.host,
+    port: profile.port,
+    username: profile.username,
+    password: profile.password,
+    bypassList: parseBypassList(bypassText.value),
+  };
+}
 
 async function save() {
   // Editing the target invalidates any previous test result.
   testResult.value = null;
+  const next = snapshot();
+  profile.bypassList = next.bypassList;
   // Can't be active with an invalid target — flip off rather than apply garbage.
   if (enabled.value && !valid.value) enabled.value = false;
-  await saveState({ enabled: enabled.value, profile: { ...profile } });
+  await saveState({ enabled: enabled.value, profile: next });
   void checkControl();
 }
 
@@ -49,7 +70,7 @@ async function runTest() {
   testing.value = true;
   testResult.value = null;
   try {
-    testResult.value = await testProxy({ ...profile });
+    testResult.value = await testProxy(snapshot());
   } catch (err) {
     testResult.value = { ok: false, error: (err as Error)?.message || 'Test failed.' };
   } finally {
@@ -158,6 +179,24 @@ async function checkControl() {
         Chrome can't authenticate SOCKS proxies — username and password are
         ignored for SOCKS.
       </p>
+
+      <label class="field">
+        <span class="label">Bypass list <em>(one per line)</em></span>
+        <textarea
+          v-model="bypassText"
+          class="bypass"
+          rows="3"
+          placeholder="&lt;local&gt;&#10;*.example.com"
+          spellcheck="false"
+          @change="save"
+        />
+      </label>
+      <p class="note">
+        Hosts that connect directly, skipping the proxy.
+        <code>&lt;local&gt;</code> covers localhost; <code>*.example.com</code>
+        matches subdomains.
+      </p>
+
       <p v-if="controlWarning" class="note warn">{{ controlWarning }}</p>
 
       <div class="test">
@@ -304,7 +343,8 @@ async function checkControl() {
 }
 
 select,
-input {
+input,
+textarea {
   width: 100%;
   padding: 8px 10px;
   font-size: 13px;
@@ -318,8 +358,16 @@ input {
 }
 
 select:focus,
-input:focus {
+input:focus,
+textarea:focus {
   border-color: var(--accent);
+}
+
+textarea.bypass {
+  resize: vertical;
+  min-height: 56px;
+  line-height: 1.45;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 input:disabled {
@@ -336,6 +384,15 @@ input:disabled {
 
 .note.warn {
   color: var(--warn);
+}
+
+.note code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--card);
+  border: 1px solid var(--border);
 }
 
 .test {
