@@ -20,47 +20,25 @@ jobs:
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
+    # Maintains a release PR (version bump + CHANGELOG). On merge it tags and
+    # creates the GitHub Release; release_created flips true on that run.
+    outputs:
+      released: ${{ steps.release.outputs.release_created }}
+      tag: ${{ steps.release.outputs.tag_name }}
     steps:
-      # Maintains a release PR (version bump + CHANGELOG). On merge it tags and
-      # creates the GitHub Release; release_created flips true on that run.
       - uses: googleapis/release-please-action@v5
         id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # Everything below runs only on the run that just published a release,
-      # building the store packages and attaching them to it.
-      - uses: actions/checkout@v7
-        if: ${{ steps.release.outputs.release_created }}
-
-      - uses: oven-sh/setup-bun@v2.2.0
-        if: ${{ steps.release.outputs.release_created }}
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        if: ${{ steps.release.outputs.release_created }}
-        run: bun install --frozen-lockfile
-
-      - name: Build and zip both targets
-        if: ${{ steps.release.outputs.release_created }}
-        run: |
-          bun run zip
-          bun run zip:firefox
-
-      - name: Attach packages to the release
-        if: ${{ steps.release.outputs.release_created }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ steps.release.outputs.tag_name }}" .output/*.zip --clobber
-
-      # Upload the new version to AMO. This only submits it; Mozilla's review
-      # still gates when it goes live. Source zip is required (the build is bundled).
-      - name: Submit to Firefox Add-ons
-        if: ${{ steps.release.outputs.release_created }}
-        env:
-          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
-          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
-          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
-        run: bun run submit:firefox
+  # Build the store packages and ship them — only on the run that just created a
+  # release. Lives in its own reusable workflow so it can also be re-run by hand
+  # against an existing tag (publish.yml's workflow_dispatch).
+  publish:
+    needs: [release-please]
+    if: ${{ needs.release-please.outputs.released == 'true' }}
+    uses: ./.github/workflows/publish.yml
+    with:
+      tag: ${{ needs.release-please.outputs.tag }}
+    secrets: inherit

@@ -1,0 +1,60 @@
+name: Publish
+
+# Builds the store packages for a released tag, attaches them to the GitHub
+# Release, and submits the new version to Firefox Add-ons. Invoked two ways:
+#   - workflow_call: from release.yml right after a release is created.
+#   - workflow_dispatch: manually, to (re)build and (re)submit an existing tag
+#     — e.g. when an earlier auto-publish failed.
+# Either way it checks out the tag, so the build matches exactly what shipped.
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag to build and submit (e.g. detour-v1.1.0)
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to (re)build and submit (e.g. detour-v1.1.0)
+        type: string
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Build & submit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
+
+      - uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build and zip both targets
+        run: |
+          bun run zip
+          bun run zip:firefox
+
+      - name: Attach packages to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ inputs.tag }}" .output/*.zip --clobber
+
+      # Upload the new version to AMO. This only submits it; Mozilla's review
+      # still gates when it goes live. Source zip is required (the build is bundled).
+      - name: Submit to Firefox Add-ons
+        env:
+          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+        run: bun run submit:firefox
