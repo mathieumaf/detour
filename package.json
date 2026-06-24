@@ -12,6 +12,7 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "submit:firefox": "wxt submit --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip",
+    "submit:chrome": "wxt submit --chrome-zip .output/*-chrome.zip",
     "compile": "vue-tsc --noEmit",
     "postinstall": "wxt prepare"
   },
