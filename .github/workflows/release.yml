@@ -47,3 +47,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ steps.release.outputs.tag_name }}" .output/*.zip --clobber
+
+      # Upload the new version to AMO. This only submits it; Mozilla's review
+      # still gates when it goes live. Source zip is required (the build is bundled).
+      - name: Submit to Firefox Add-ons
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+        run: bun run submit:firefox
