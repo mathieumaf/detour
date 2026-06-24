@@ -18,6 +18,13 @@ It loads no remote code and includes no analytics or tracking.
 
 ## Contact
 
-Questions or concerns: <https://github.com/mathieumaf/detour/issues>
+Questions or concerns: detour@mafille.me
+
+<!--
+Repo-only note (not part of the published policy):
+The repo is private, so the public URL used as the Chrome Web Store privacy
+policy is a public Gist holding the policy text above. Keep that text in sync
+when editing here: https://gist.github.com/mathieumaf/5f62915d442b39082544eb62c963da65
+-->
 
 _Last updated: 2026-06-24_
