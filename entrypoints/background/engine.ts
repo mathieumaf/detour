@@ -1,4 +1,4 @@
-import { isProfileValid, isBypassed } from '@/utils/proxy';
+import { isProfileValid, isBypassed, expandBypassForChromium } from '@/utils/proxy';
 import type { ProxyState, ProxyProfile } from '@/utils/proxy';
 
 // The proxy engine: two backends behind one contract. Chromium drives the
@@ -67,7 +67,7 @@ export async function enableProxy(p: ProxyProfile) {
       mode: 'fixed_servers',
       rules: {
         singleProxy: { scheme: p.scheme, host: p.host.trim(), port: p.port },
-        bypassList: p.bypassList,
+        bypassList: expandBypassForChromium(p.bypassList),
       },
     },
   });
