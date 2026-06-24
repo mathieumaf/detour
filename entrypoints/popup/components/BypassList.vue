@@ -12,15 +12,16 @@ const { bypassText, save } = useProxyState();
         v-model="bypassText"
         class="bypass"
         rows="3"
-        placeholder="&lt;local&gt;&#10;*.example.com"
+        placeholder="&lt;local&gt;&#10;&lt;private&gt;&#10;*.example.com"
         spellcheck="false"
         @change="save"
       />
     </label>
     <p class="note">
       Hosts that connect directly, skipping the proxy.
-      <code>&lt;local&gt;</code> covers localhost; <code>*.example.com</code>
-      matches subdomains.
+      <code>&lt;local&gt;</code> covers localhost, <code>&lt;private&gt;</code>
+      all private networks, <code>*.example.com</code> subdomains, and
+      <code>10.0.0.0/8</code> an IP range.
     </p>
   </div>
 </template>

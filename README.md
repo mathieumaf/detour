@@ -28,9 +28,12 @@ out of scope (it would require a native Network Extension).
   `webRequest.onAuthRequired` (using the MV3 `webRequestAuthProvider`
   permission).
 - **Bypass list** lets you list hosts that connect directly, skipping the
-  proxy. `<local>` covers localhost and dotless hostnames, `*.example.com`
-  matches subdomains, and a bare host matches itself. Chromium consumes the list
-  natively; Firefox applies it per-request in the `proxy.onRequest` listener.
+  proxy. `<local>` covers localhost and dotless hostnames, `<private>` covers
+  loopback plus RFC 1918 / link-local / unique-local ranges (IPv4 and IPv6),
+  `10.0.0.0/8` matches a CIDR range, `*.example.com` matches subdomains, and a
+  bare host matches itself. Chromium consumes the list natively (with `<private>`
+  expanded to its ranges); Firefox applies it per-request in the
+  `proxy.onRequest` listener.
 - **State** lives in `chrome.storage.local` as the single source of truth shared
   between the popup and the background worker.
 - The toolbar icon shows an **ON** badge while the proxy is active.
