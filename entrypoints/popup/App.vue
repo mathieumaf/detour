@@ -1,80 +1,13 @@
 <script lang="ts" setup>
-import { reactive, ref, computed, onMounted } from 'vue';
-import {
-  loadState,
-  saveState,
-  testProxy,
-  authSupported,
-  isProfileValid,
-  DEFAULT_PROFILE,
-  type ProxyProfile,
-  type ProxyScheme,
-  type TestResult,
-} from '@/utils/proxy';
+import { onMounted } from 'vue';
+import { useProxyState } from './composables/useProxyState';
+import ProxyForm from './components/ProxyForm.vue';
+import BypassList from './components/BypassList.vue';
+import ConnectionTest from './components/ConnectionTest.vue';
 
-const SCHEMES: { value: ProxyScheme; label: string }[] = [
-  { value: 'http', label: 'HTTP' },
-  { value: 'https', label: 'HTTPS' },
-  { value: 'socks4', label: 'SOCKS4' },
-  { value: 'socks5', label: 'SOCKS5' },
-];
+const { enabled, valid, controlWarning, toggle, load } = useProxyState();
 
-const enabled = ref(false);
-const profile = reactive<ProxyProfile>({ ...DEFAULT_PROFILE });
-const controlWarning = ref('');
-const testing = ref(false);
-const testResult = ref<TestResult | null>(null);
-
-const valid = computed(() => isProfileValid(profile));
-const supportsAuth = computed(() => authSupported(profile.scheme));
-
-onMounted(async () => {
-  const s = await loadState();
-  enabled.value = s.enabled;
-  Object.assign(profile, s.profile);
-  void checkControl();
-});
-
-async function save() {
-  // Editing the target invalidates any previous test result.
-  testResult.value = null;
-  // Can't be active with an invalid target — flip off rather than apply garbage.
-  if (enabled.value && !valid.value) enabled.value = false;
-  await saveState({ enabled: enabled.value, profile: { ...profile } });
-  void checkControl();
-}
-
-async function runTest() {
-  if (!valid.value || testing.value) return;
-  testing.value = true;
-  testResult.value = null;
-  try {
-    testResult.value = await testProxy({ ...profile });
-  } catch (err) {
-    testResult.value = { ok: false, error: (err as Error)?.message || 'Test failed.' };
-  } finally {
-    testing.value = false;
-  }
-}
-
-async function toggle() {
-  if (!enabled.value && !valid.value) return;
-  enabled.value = !enabled.value;
-  await save();
-}
-
-async function checkControl() {
-  try {
-    const { levelOfControl } = await chrome.proxy.settings.get({});
-    if (levelOfControl === 'controlled_by_other_extensions')
-      controlWarning.value = 'Another extension is controlling the proxy settings.';
-    else if (levelOfControl === 'not_controllable')
-      controlWarning.value = 'Proxy settings are locked by your system or organization.';
-    else controlWarning.value = '';
-  } catch {
-    controlWarning.value = '';
-  }
-}
+onMounted(load);
 </script>
 
 <template>
@@ -101,85 +34,10 @@ async function checkControl() {
     </p>
 
     <form class="form" @submit.prevent>
-      <label class="field">
-        <span class="label">Type</span>
-        <select v-model="profile.scheme" @change="save">
-          <option v-for="s in SCHEMES" :key="s.value" :value="s.value">
-            {{ s.label }}
-          </option>
-        </select>
-      </label>
-
-      <div class="row">
-        <label class="field host">
-          <span class="label">Host</span>
-          <input
-            v-model.trim="profile.host"
-            placeholder="127.0.0.1"
-            spellcheck="false"
-            @change="save"
-          />
-        </label>
-        <label class="field port">
-          <span class="label">Port</span>
-          <input
-            v-model.number="profile.port"
-            type="number"
-            min="1"
-            max="65535"
-            @change="save"
-          />
-        </label>
-      </div>
-
-      <label class="field">
-        <span class="label">Username <em>(optional)</em></span>
-        <input
-          v-model="profile.username"
-          autocomplete="off"
-          spellcheck="false"
-          :disabled="!supportsAuth"
-          @change="save"
-        />
-      </label>
-
-      <label class="field">
-        <span class="label">Password <em>(optional)</em></span>
-        <input
-          v-model="profile.password"
-          type="password"
-          autocomplete="off"
-          :disabled="!supportsAuth"
-          @change="save"
-        />
-      </label>
-
-      <p v-if="!supportsAuth" class="note">
-        Chrome can't authenticate SOCKS proxies — username and password are
-        ignored for SOCKS.
-      </p>
+      <ProxyForm />
+      <BypassList />
       <p v-if="controlWarning" class="note warn">{{ controlWarning }}</p>
-
-      <div class="test">
-        <button
-          class="test-btn"
-          type="button"
-          :disabled="!valid || testing"
-          @click="runTest"
-        >
-          {{ testing ? 'Testing…' : 'Test connection' }}
-        </button>
-        <p
-          v-if="testResult"
-          class="result"
-          :class="testResult.ok ? 'ok' : 'fail'"
-        >
-          <template v-if="testResult.ok">
-            ✓ Connected · {{ testResult.ip }} · {{ testResult.ms }} ms
-          </template>
-          <template v-else>✗ {{ testResult.error }}</template>
-        </p>
-      </div>
+      <ConnectionTest />
     </form>
   </main>
 </template>
@@ -270,114 +128,5 @@ async function checkControl() {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.row {
-  display: flex;
-  gap: 10px;
-}
-
-.host {
-  flex: 1 1 auto;
-}
-
-.port {
-  width: 84px;
-  flex: 0 0 auto;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.label {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--muted);
-}
-
-.label em {
-  font-style: normal;
-  opacity: 0.7;
-}
-
-select,
-input {
-  width: 100%;
-  padding: 8px 10px;
-  font-size: 13px;
-  font-family: inherit;
-  color: var(--fg);
-  background: var(--input-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-select:focus,
-input:focus {
-  border-color: var(--accent);
-}
-
-input:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.note {
-  margin: 2px 0 0;
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--muted);
-}
-
-.note.warn {
-  color: var(--warn);
-}
-
-.test {
-  margin-top: 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.test-btn {
-  padding: 9px 12px;
-  font-size: 13px;
-  font-weight: 500;
-  font-family: inherit;
-  color: var(--fg);
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-
-.test-btn:hover:not(:disabled) {
-  border-color: var(--accent);
-}
-
-.test-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.result {
-  margin: 0;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
-
-.result.ok {
-  color: var(--accent);
-}
-
-.result.fail {
-  color: var(--warn);
 }
 </style>

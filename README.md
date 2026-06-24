@@ -27,6 +27,10 @@ out of scope (it would require a native Network Extension).
 - **Proxy authentication** for HTTP/HTTPS is supplied through
   `webRequest.onAuthRequired` (using the MV3 `webRequestAuthProvider`
   permission).
+- **Bypass list** lets you list hosts that connect directly, skipping the
+  proxy. `<local>` covers localhost and dotless hostnames, `*.example.com`
+  matches subdomains, and a bare host matches itself. Chromium consumes the list
+  natively; Firefox applies it per-request in the `proxy.onRequest` listener.
 - **State** lives in `chrome.storage.local` as the single source of truth shared
   between the popup and the background worker.
 - The toolbar icon shows an **ON** badge while the proxy is active.
