@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/mathieumaf/detour/compare/detour-v1.0.1...detour-v1.1.0) (2026-06-24)
+
+
+### Features
+
+* **proxy:** editable bypass list ([#13](https://github.com/mathieumaf/detour/issues/13)) ([e5a9b00](https://github.com/mathieumaf/detour/commit/e5a9b0098b04cc98ce180b2036859f71c9068da0))
+
 ## [1.0.1](https://github.com/mathieumaf/detour/compare/detour-v1.0.0...detour-v1.0.1) (2026-06-20)
 
 
