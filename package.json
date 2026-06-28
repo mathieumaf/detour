@@ -17,14 +17,14 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
-    "vue": "^3.5.29"
+    "vue": "^3.5.39"
   },
   "devDependencies": {
     "@types/chrome": "^0.2.0",
     "@wxt-dev/module-vue": "^1.0.3",
     "typescript": "^5.9.3",
     "vue-tsc": "^3.2.5",
-    "wxt": "^0.20.26"
+    "wxt": "^0.20.27"
   },
   "trustedDependencies": [
     "spawn-sync"
