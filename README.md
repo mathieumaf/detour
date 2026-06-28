@@ -6,6 +6,11 @@ authentication for HTTP/HTTPS proxies.
 
 Built with [WXT](https://wxt.dev) + Vue (MV3).
 
+## Install
+
+- **Chrome / Edge / Brave / Opera / Vivaldi / Arc** — [Chrome Web Store](https://chromewebstore.google.com/detail/detour/ajfhkoilhlahkkbmnbcfoolbfhpfdpjp)
+- **Firefox** — [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/detour-proxy/)
+
 ## Browser support
 
 | Browser | Proxy | HTTP/HTTPS auth | SOCKS auth |

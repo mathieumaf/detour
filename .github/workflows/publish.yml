@@ -28,10 +28,6 @@ jobs:
   publish:
     name: Build & submit
     runs-on: ubuntu-latest
-    env:
-      # The Chrome submit is skipped until these secrets are configured, so this
-      # workflow is safe to run before the Chrome Web Store is wired up.
-      HAS_CHROME: ${{ secrets.CHROME_EXTENSION_ID != '' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -63,11 +59,9 @@ jobs:
           FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: bun run submit:firefox
 
-      # Upload the new version to the Chrome Web Store. Skipped until the
-      # CHROME_* secrets exist. Like AMO, this only submits; Google's review
-      # still gates when it goes live.
+      # Upload the new version to the Chrome Web Store. Like AMO, this only
+      # submits; Google's review still gates when it goes live.
       - name: Submit to Chrome Web Store
-        if: ${{ env.HAS_CHROME == 'true' }}
         env:
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
           CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
