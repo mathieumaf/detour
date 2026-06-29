@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useProxyState } from '../composables/useProxyState';
+import { useProxyState } from '@/composables/useProxyState';
 import type { ProxyScheme } from '@/utils/proxy';
 
 const SCHEMES: { value: ProxyScheme; label: string }[] = [

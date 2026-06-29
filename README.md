@@ -27,6 +27,11 @@ out of scope (it would require a native Network Extension).
 
 ## How it works
 
+- **Popup vs. settings** — the toolbar popup is a quick switch: connection
+  status, the on/off toggle, a one-line summary of the configured proxy, and a
+  connection test. The full configuration — server, credentials, bypass list,
+  and import/export — lives on a dedicated settings page opened from the popup's
+  gear icon.
 - **Background service worker** applies the proxy via `chrome.proxy.settings`
   when enabled, and releases it (falling back to system settings) when disabled.
 - **Proxy authentication** for HTTP/HTTPS is supplied through
@@ -39,8 +44,13 @@ out of scope (it would require a native Network Extension).
   bare host matches itself. Chromium consumes the list natively (with `<private>`
   expanded to its ranges); Firefox applies it per-request in the
   `proxy.onRequest` listener.
+- **Import / Export** — the settings page saves the current proxy config
+  (including the password) to a JSON file and loads it back, for backup or
+  moving between machines.
 - **State** lives in `chrome.storage.local` as the single source of truth shared
-  between the popup and the background worker.
+  between the popup, the settings page, and the background worker. The popup and
+  settings page subscribe to storage changes, so an edit in one is reflected in
+  the other.
 - The toolbar icon shows an **ON** badge while the proxy is active.
 
 ## Known limitation (Chromium only)

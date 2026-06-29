@@ -5,3 +5,4 @@ export * from './validation';
 export * from './bypass';
 export * from './storage';
 export * from './messaging';
+export * from './transfer';

@@ -1,13 +1,23 @@
 <script lang="ts" setup>
-import { onMounted } from 'vue';
-import { useProxyState } from './composables/useProxyState';
-import ProxyForm from './components/ProxyForm.vue';
-import BypassList from './components/BypassList.vue';
-import ConnectionTest from './components/ConnectionTest.vue';
+import { computed, onMounted } from 'vue';
+import { useProxyState } from '@/composables/useProxyState';
+import ConnectionTest from '@/components/ConnectionTest.vue';
 
-const { enabled, valid, controlWarning, toggle, load } = useProxyState();
+const { enabled, profile, valid, controlWarning, toggle, load } = useProxyState();
 
 onMounted(load);
+
+// One-line description of the configured target, shown in place of the full
+// form — the form now lives on the options page.
+const summary = computed(() =>
+  valid.value
+    ? `${profile.scheme.toUpperCase()} · ${profile.host}:${profile.port}`
+    : 'Not configured',
+);
+
+function openOptions() {
+  chrome.runtime.openOptionsPage();
+}
 </script>
 
 <template>
@@ -17,28 +27,50 @@ onMounted(load);
         <span class="dot" :class="{ on: enabled }" />
         <h1>Detour</h1>
       </div>
-      <button
-        class="switch"
-        :class="{ on: enabled }"
-        :disabled="!enabled && !valid"
-        :aria-pressed="enabled"
-        type="button"
-        @click="toggle"
-      >
-        <span class="knob" />
-      </button>
+      <div class="actions">
+        <button
+          class="gear"
+          type="button"
+          title="Settings"
+          aria-label="Settings"
+          @click="openOptions"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z M19.4 13a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-2.82-1.17l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 13H4.5a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.17-2.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 11 4.6V4.5a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 2.82 1.17l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 11h.1a2 2 0 1 1 0 4h-.1Z"
+            />
+          </svg>
+        </button>
+        <button
+          class="switch"
+          :class="{ on: enabled }"
+          :disabled="!enabled && !valid"
+          :aria-pressed="enabled"
+          type="button"
+          @click="toggle"
+        >
+          <span class="knob" />
+        </button>
+      </div>
     </header>
 
     <p class="status" :class="{ active: enabled }">
       {{ enabled ? 'Proxy active' : 'Direct connection' }}
     </p>
 
-    <form class="form" @submit.prevent>
-      <ProxyForm />
-      <BypassList />
-      <p v-if="controlWarning" class="note warn">{{ controlWarning }}</p>
-      <ConnectionTest />
-    </form>
+    <button class="summary" type="button" @click="openOptions">
+      <span class="summary-text" :class="{ unset: !valid }">{{ summary }}</span>
+      <span class="summary-edit">Edit</span>
+    </button>
+
+    <p v-if="controlWarning" class="note warn">{{ controlWarning }}</p>
+
+    <ConnectionTest />
   </main>
 </template>
 
@@ -76,6 +108,32 @@ onMounted(load);
 .dot.on {
   background: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.gear:hover {
+  color: var(--fg);
+  background: var(--card);
 }
 
 .switch {
@@ -124,9 +182,41 @@ onMounted(load);
   color: var(--accent);
 }
 
-.form {
+.summary {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+  color: var(--fg);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.summary:hover {
+  border-color: var(--accent);
+}
+
+.summary-text {
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-text.unset {
+  color: var(--muted);
+}
+
+.summary-edit {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
 }
 </style>
