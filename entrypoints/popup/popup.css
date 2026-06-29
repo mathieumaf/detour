@@ -1,0 +1,4 @@
+/* Popup-only chrome. Shared form controls and theme live in @/assets/ui.css. */
+body {
+  width: 300px;
+}

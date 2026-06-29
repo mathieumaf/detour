@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useProxyState } from '../composables/useProxyState';
+import { useProxyState } from '@/composables/useProxyState';
 
 const { bypassText, save } = useProxyState();
 </script>

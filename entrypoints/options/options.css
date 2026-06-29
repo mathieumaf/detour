@@ -1,0 +1,5 @@
+/* Options page layout. Shared form controls and theme live in @/assets/ui.css. */
+body {
+  min-height: 100vh;
+  padding: 40px 20px;
+}

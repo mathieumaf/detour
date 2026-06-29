@@ -7,14 +7,21 @@ import {
   isProfileValid,
   parseBypassList,
   formatBypassList,
+  buildExport,
+  parseImport,
   DEFAULT_PROFILE,
+  STORAGE_KEY,
   type ProxyProfile,
+  type ProxyState,
   type TestResult,
 } from '@/utils/proxy';
 
-// Single shared store for the popup. Defined at module scope so every component
-// (form, bypass list, test) reads and mutates the same reactive state without
-// prop-drilling — the popup only ever has one instance.
+// Shared store for a single page (popup or options). Defined at module scope so
+// every component reads and mutates the same reactive state without prop-
+// drilling. The popup and options page are separate documents with their own
+// instance of this module, so each subscribes to chrome.storage below to stay
+// in sync with edits made in the other — otherwise a stale `enabled` flag from
+// one view would clobber the proxy when the other view saves.
 
 const enabled = ref(false);
 const profile = reactive<ProxyProfile>({ ...DEFAULT_PROFILE });
@@ -41,11 +48,24 @@ function snapshot(): ProxyProfile {
   };
 }
 
-async function load() {
-  const s = await loadState();
+// Serialized form of our most recent write, so the storage listener can tell
+// our own change apart from one made by the other view and skip re-applying it
+// (which would reformat fields mid-edit).
+let lastWritten = '';
+
+function applyToView(s: ProxyState) {
   enabled.value = s.enabled;
-  Object.assign(profile, s.profile);
+  Object.assign(profile, { ...DEFAULT_PROFILE, ...s.profile });
   bypassText.value = formatBypassList(profile.bypassList);
+}
+
+async function persist(state: ProxyState) {
+  lastWritten = JSON.stringify(state);
+  await saveState(state);
+}
+
+async function load() {
+  applyToView(await loadState());
   await checkControl();
 }
 
@@ -56,9 +76,21 @@ async function save() {
   profile.bypassList = next.bypassList;
   // Can't be active with an invalid target — flip off rather than apply garbage.
   if (enabled.value && !valid.value) enabled.value = false;
-  await saveState({ enabled: enabled.value, profile: next });
+  await persist({ enabled: enabled.value, profile: next });
   await checkControl();
 }
+
+// Mirror edits made in the other view (e.g. toggling in the popup while the
+// options page is open). Ignoring our own writes keeps the active field from
+// being reformatted out from under the cursor.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local' || !changes[STORAGE_KEY]) return;
+  const next = changes[STORAGE_KEY].newValue as ProxyState | undefined;
+  if (!next || JSON.stringify(next) === lastWritten) return;
+  applyToView(next);
+  testResult.value = null;
+  void checkControl();
+});
 
 async function runTest() {
   if (!valid.value || testing.value) return;
@@ -71,6 +103,27 @@ async function runTest() {
   } finally {
     testing.value = false;
   }
+}
+
+// Download the current profile (including unsaved edits) as a JSON file.
+function exportConfig() {
+  const blob = new Blob([buildExport(snapshot())], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'detour-config.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Load a profile from a previously exported file and apply it. Throws on a
+// malformed file so the caller can surface the message; never enables a proxy
+// that the imported profile leaves invalid (save() handles that).
+async function importConfig(file: File): Promise<void> {
+  const imported = parseImport(await file.text());
+  Object.assign(profile, imported);
+  bypassText.value = formatBypassList(profile.bypassList);
+  await save();
 }
 
 async function toggle() {
@@ -106,5 +159,7 @@ export function useProxyState() {
     save,
     runTest,
     toggle,
+    exportConfig,
+    importConfig,
   };
 }

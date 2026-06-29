@@ -35,12 +35,11 @@
 
 body {
   margin: 0;
-  width: 300px;
   background: var(--bg);
   color: var(--fg);
 }
 
-/* Shared form controls, used across the popup components. */
+/* Shared form controls, used across the popup and options components. */
 .field {
   display: flex;
   flex-direction: column;
