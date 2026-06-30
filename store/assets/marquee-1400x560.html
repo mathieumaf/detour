@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="listing.css" />
+    <style>
+      body { width: 1400px; height: 560px; }
+      .stage {
+        width: 1400px;
+        height: 560px;
+        display: flex;
+        align-items: center;
+        gap: 40px;
+        padding: 0 84px;
+      }
+      .copy { flex: 1 1 auto; max-width: 720px; }
+      .h1 { font-size: 76px; }
+      .sub { font-size: 27px; margin: 22px 0 30px; max-width: 600px; }
+      .device { flex: 0 0 auto; transform: scale(1.18); transform-origin: center right; }
+    </style>
+  </head>
+  <body>
+    <div class="stage">
+      <div class="copy">
+        <div class="h1">Switch proxies<br />in one click</div>
+        <div class="sub">
+          HTTP · HTTPS · SOCKS4/5 — with authentication, a bypass list, and a
+          one-click connection test.
+        </div>
+        <div class="pills">
+          <span class="pill"><span class="tick">✓</span> Toolbar toggle</span>
+          <span class="pill"><span class="tick">✓</span> Bypass list</span>
+          <span class="pill"><span class="tick">✓</span> No data collected</span>
+        </div>
+      </div>
+
+      <div class="device">
+        <div class="pop">
+          <div class="pop-head">
+            <div class="brand">
+              <span class="dot on"></span><span class="name">Detour</span>
+            </div>
+            <div class="actions">
+              <span class="gear">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/>
+                  <circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="2 3"/>
+                </svg>
+              </span>
+              <span class="switch on"><span class="knob"></span></span>
+            </div>
+          </div>
+          <p class="status on">Proxy active</p>
+          <div class="summary">
+            <span>SOCKS5 · 10.8.0.1:1080</span>
+            <span class="edit">Edit</span>
+          </div>
+          <div class="testbtn">Test connection</div>
+          <p class="result ok">✓ Connected · 203.0.113.24 · 142 ms</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

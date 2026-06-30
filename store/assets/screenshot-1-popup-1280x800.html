@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="listing.css" />
+    <style>
+      body { width: 1280px; height: 800px; }
+      .stage {
+        width: 1280px;
+        height: 800px;
+        display: flex;
+        align-items: center;
+        gap: 60px;
+        padding: 0 96px;
+      }
+      .cap { flex: 1 1 auto; max-width: 600px; }
+      .cap .big { font-size: 52px; line-height: 1.08; letter-spacing: -0.02em; display: block; }
+      .cap .lead { font-size: 23px; margin-top: 20px; }
+      .device { flex: 0 0 auto; transform: scale(1.35); transform-origin: center; margin-right: 40px; }
+    </style>
+  </head>
+  <body>
+    <div class="stage">
+      <div class="cap">
+        <span class="big">Flip your proxy<br />on or off</span>
+        <span class="lead">One click from the toolbar — no digging through system settings.</span>
+      </div>
+      <div class="device">
+        <div class="pop">
+          <div class="pop-head">
+            <div class="brand">
+              <span class="dot on"></span><span class="name">Detour</span>
+            </div>
+            <div class="actions">
+              <span class="gear">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/>
+                  <circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="2 3"/>
+                </svg>
+              </span>
+              <span class="switch on"><span class="knob"></span></span>
+            </div>
+          </div>
+          <p class="status on">Proxy active</p>
+          <div class="summary">
+            <span>HTTPS · proxy.example.com:8443</span>
+            <span class="edit">Edit</span>
+          </div>
+          <div class="testbtn">Test connection</div>
+          <p class="result ok">✓ Connected · 203.0.113.24 · 142 ms</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

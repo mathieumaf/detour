@@ -1,0 +1,32 @@
+<svg width="1280" height="800" viewBox="0 0 1280 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- The "detour" routing motif: nodes linked by rerouting paths. Drawn in a
+       single colour so callers can tint it via CSS (currentColor on <img> won't
+       work, so paths use a fixed dark ink at low opacity via the stage). -->
+  <g stroke="#0f3d24" stroke-width="2" fill="none" opacity="0.9">
+    <path d="M120 120 H360 V300 H560" />
+    <path d="M560 300 V520 H820" />
+    <path d="M820 300 H1040 V520" />
+    <path d="M360 300 V620 H700" />
+    <path d="M820 120 V300" />
+    <path d="M1040 200 H820" />
+    <path d="M700 620 V760" />
+    <path d="M1040 520 H1180" />
+    <path d="M560 520 V680 H360" />
+  </g>
+  <g fill="#0f3d24" opacity="0.95">
+    <circle cx="120" cy="120" r="7" />
+    <circle cx="360" cy="300" r="7" />
+    <circle cx="560" cy="300" r="7" />
+    <circle cx="560" cy="520" r="7" />
+    <circle cx="820" cy="300" r="9" />
+    <circle cx="820" cy="520" r="7" />
+    <circle cx="1040" cy="520" r="7" />
+    <circle cx="1040" cy="200" r="7" />
+    <circle cx="820" cy="120" r="7" />
+    <circle cx="700" cy="620" r="7" />
+    <circle cx="360" cy="620" r="7" />
+    <circle cx="700" cy="760" r="6" />
+    <circle cx="1180" cy="520" r="6" />
+    <circle cx="1180" cy="120" r="5" />
+  </g>
+</svg>
