@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/mathieumaf/detour/compare/detour-v1.2.0...detour-v1.3.0) (2026-06-30)
+
+
+### Features
+
+* add settings page and proxy config import/export ([#25](https://github.com/mathieumaf/detour/issues/25)) ([ef8cfde](https://github.com/mathieumaf/detour/commit/ef8cfde01d9f375cfca6360f21883cef63b1156e))
+
 ## [1.2.0](https://github.com/mathieumaf/detour/compare/detour-v1.1.0...detour-v1.2.0) (2026-06-24)
 
 
