@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="listing.css" />
+    <style>
+      body { width: 1280px; height: 800px; }
+      .stage {
+        width: 1280px;
+        height: 800px;
+        display: flex;
+        align-items: center;
+        gap: 56px;
+        padding: 0 96px;
+      }
+      .cap { flex: 1 1 auto; max-width: 540px; }
+      .cap .big { font-size: 50px; line-height: 1.08; letter-spacing: -0.02em; display: block; }
+      .cap .lead { font-size: 22px; margin-top: 20px; }
+      .device { flex: 0 0 auto; }
+    </style>
+  </head>
+  <body>
+    <div class="stage">
+      <div class="cap">
+        <span class="big">All your config<br />in one place</span>
+        <span class="lead">Server, credentials, bypass list, and backup — on a roomy settings page.</span>
+      </div>
+
+      <div class="device">
+        <div class="set">
+          <div class="set-head">
+            <span class="dot on"></span>
+            <h1>Detour</h1>
+            <span class="sub2">Settings</span>
+          </div>
+
+          <div class="card">
+            <h2>Proxy server</h2>
+            <div class="f">
+              <span class="f-label">Type</span>
+              <div class="f-input">SOCKS5</div>
+            </div>
+            <div class="row">
+              <div class="f"><span class="f-label">Host</span><div class="f-input">10.8.0.1</div></div>
+              <div class="f port"><span class="f-label">Port</span><div class="f-input">1080</div></div>
+            </div>
+            <div class="f">
+              <span class="f-label">Username <em style="opacity:.7;font-style:normal">(optional)</em></span>
+              <div class="f-input">alice</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Bypass list</h2>
+            <div class="f">
+              <span class="f-label">Hosts that connect directly</span>
+              <div class="f-input mono">&lt;local&gt;<br />*.internal.example.com<br />10.0.0.0/8</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Backup</h2>
+            <div class="btn-row">
+              <div class="testbtn">Export</div>
+              <div class="testbtn">Import</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
