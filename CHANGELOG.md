@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/mathieumaf/detour/compare/detour-v1.3.0...detour-v1.3.1) (2026-07-03)
+
+
+### Bug Fixes
+
+* trigger empty 1.3.1 release ([ebfcda2](https://github.com/mathieumaf/detour/commit/ebfcda24d6c4c34004bbd4127d7e3d4feeff1641))
+* trigger empty 1.3.1 release ([1665856](https://github.com/mathieumaf/detour/commit/16658569c42a0cb10d9afc05d818ed90764998cf))
+
 ## [1.3.0](https://github.com/mathieumaf/detour/compare/detour-v1.2.0...detour-v1.3.0) (2026-06-30)
 
 
