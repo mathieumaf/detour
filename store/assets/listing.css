@@ -168,16 +168,6 @@ body {
   gap: 8px;
 }
 
-.gear {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 26px;
-  border-radius: 8px;
-  color: var(--muted);
-}
-
 .switch {
   position: relative;
   width: 46px;
@@ -216,23 +206,41 @@ body {
   color: var(--accent);
 }
 
+.profile-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.profile-picker,
+.settings-btn {
+  padding: 8px 9px;
+  font-size: 12px;
+  color: var(--fg);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+
+.profile-picker {
+  flex: 1;
+}
+
+.settings-btn {
+  flex: 0 0 auto;
+  padding-inline: 10px;
+  font-weight: 500;
+}
+
 .summary {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
   margin-bottom: 12px;
   padding: 10px 12px;
   font-size: 13px;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 8px;
-}
-
-.summary .edit {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--muted);
 }
 
 .testbtn {

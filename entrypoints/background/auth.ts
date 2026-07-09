@@ -1,4 +1,4 @@
-import { authSupported } from '@/utils/proxy';
+import { activeProfile, authSupported } from '@/utils/proxy';
 import { ctx, handledAuth } from './context';
 
 // Proxy authentication for HTTP/HTTPS. SOCKS auth is handled inline by Firefox's
@@ -29,7 +29,7 @@ function resolveAuth(
   details: chrome.webRequest.OnAuthRequiredDetails,
 ): chrome.webRequest.BlockingResponse {
   // A running test takes precedence; otherwise use the saved profile if active.
-  const p = ctx.testProfile ?? (ctx.state?.enabled ? ctx.state.profile : null);
+  const p = ctx.testProfile ?? (ctx.state?.enabled ? activeProfile(ctx.state) : null);
 
   if (!details.isProxy || !p || !authSupported(p.scheme) || !p.username) {
     return {};

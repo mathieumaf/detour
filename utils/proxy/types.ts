@@ -4,6 +4,8 @@
 export type ProxyScheme = 'http' | 'https' | 'socks4' | 'socks5';
 
 export interface ProxyProfile {
+  id: string;
+  name: string;
   scheme: ProxyScheme;
   host: string;
   port: number;
@@ -17,7 +19,8 @@ export interface ProxyProfile {
 
 export interface ProxyState {
   enabled: boolean;
-  profile: ProxyProfile;
+  activeProfileId: string;
+  profiles: ProxyProfile[];
 }
 
 export interface TestResult {
@@ -30,6 +33,8 @@ export interface TestResult {
 export const STORAGE_KEY = 'proxyState';
 
 export const DEFAULT_PROFILE: ProxyProfile = {
+  id: 'default',
+  name: 'Default profile',
   scheme: 'http',
   host: '',
   port: 8080,
@@ -40,5 +45,11 @@ export const DEFAULT_PROFILE: ProxyProfile = {
 
 export const DEFAULT_STATE: ProxyState = {
   enabled: false,
-  profile: { ...DEFAULT_PROFILE },
+  activeProfileId: DEFAULT_PROFILE.id,
+  profiles: [{ ...DEFAULT_PROFILE, bypassList: [...DEFAULT_PROFILE.bypassList] }],
 };
+
+export function activeProfile(state: ProxyState): ProxyProfile {
+  return state.profiles.find((profile) => profile.id === state.activeProfileId)
+    ?? state.profiles[0];
+}

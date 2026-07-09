@@ -1,26 +1,33 @@
-import { DEFAULT_PROFILE } from './types';
-import type { ProxyProfile, ProxyScheme } from './types';
+import { DEFAULT_PROFILE, DEFAULT_STATE } from './types';
+import type { ProxyProfile, ProxyScheme, ProxyState } from './types';
 
 // Serialize/parse a proxy profile for the Import/Export buttons. The exported
 // file is versioned so future model changes can migrate older files, and
 // parsing is defensive: anything missing or malformed falls back to the
 // DEFAULT_PROFILE value rather than throwing, mirroring loadState().
 
-export const EXPORT_VERSION = 1;
+export const EXPORT_VERSION = 2;
 
 export interface ExportFile {
   app: 'detour';
   version: number;
   exportedAt: string;
-  profile: ProxyProfile;
+  state: ProxyState;
 }
 
 const SCHEMES: readonly ProxyScheme[] = ['http', 'https', 'socks4', 'socks5'];
 
 // Coerce an untrusted object into a valid ProxyProfile, backfilling defaults.
-function sanitizeProfile(raw: Record<string, unknown>): ProxyProfile {
+function sanitizeProfile(raw: Record<string, unknown>, index: number): ProxyProfile {
   const port = Number(raw.port);
   return {
+    id: typeof raw.id === 'string' && raw.id ? raw.id : `imported-${index}`,
+    name:
+      typeof raw.name === 'string' && raw.name.trim()
+        ? raw.name.trim()
+        : index === 0
+          ? DEFAULT_PROFILE.name
+          : `Profile ${index + 1}`,
     scheme: SCHEMES.includes(raw.scheme as ProxyScheme)
       ? (raw.scheme as ProxyScheme)
       : DEFAULT_PROFILE.scheme,
@@ -37,30 +44,52 @@ function sanitizeProfile(raw: Record<string, unknown>): ProxyProfile {
   };
 }
 
-export function buildExport(profile: ProxyProfile): string {
+export function buildExport(state: ProxyState): string {
   const file: ExportFile = {
     app: 'detour',
     version: EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
-    profile,
+    state,
   };
   return JSON.stringify(file, null, 2);
 }
 
-// Parse the contents of an imported file into a profile. Accepts either the
-// wrapped export shape ({ app, version, profile }) or a bare profile object,
-// so a hand-written or older file still works. Throws only when the input
-// isn't JSON or carries no usable object.
-export function parseImport(text: string): ProxyProfile {
+// Parse the contents of an imported file into a state. Version 1 exports and
+// bare profiles remain accepted, and are imported as one active profile.
+export function parseImport(text: string): ProxyState {
   let data: unknown;
   try {
     data = JSON.parse(text);
   } catch {
     throw new Error('Not a valid JSON file.');
   }
-  const raw = (data as { profile?: unknown })?.profile ?? data;
+  const raw = data as { state?: unknown; profile?: unknown };
   if (!raw || typeof raw !== 'object') {
     throw new Error('No proxy config found in this file.');
   }
-  return sanitizeProfile(raw as Record<string, unknown>);
+  if (raw.state && typeof raw.state === 'object') {
+    const state = raw.state as { enabled?: unknown; activeProfileId?: unknown; profiles?: unknown };
+    if (Array.isArray(state.profiles) && state.profiles.length) {
+      const profiles = state.profiles
+        .filter((profile): profile is Record<string, unknown> => !!profile && typeof profile === 'object')
+        .map((profile, index) => sanitizeProfile(profile, index));
+      if (profiles.length) {
+        const activeProfileId = profiles.some((profile) => profile.id === state.activeProfileId)
+          ? state.activeProfileId as string
+          : profiles[0].id;
+        return { enabled: state.enabled === true, activeProfileId, profiles };
+      }
+    }
+  }
+
+  const profile = raw.profile ?? data;
+  if (!profile || typeof profile !== 'object') {
+    throw new Error('No proxy config found in this file.');
+  }
+  const imported = sanitizeProfile(profile as Record<string, unknown>, 0);
+  return {
+    ...DEFAULT_STATE,
+    activeProfileId: imported.id,
+    profiles: [imported],
+  };
 }

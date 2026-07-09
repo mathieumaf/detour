@@ -3,7 +3,17 @@ import { computed, onMounted } from 'vue';
 import { useProxyState } from '@/composables/useProxyState';
 import ConnectionTest from '@/components/ConnectionTest.vue';
 
-const { enabled, profile, valid, controlWarning, toggle, load } = useProxyState();
+const {
+  enabled,
+  activeProfileId,
+  profiles,
+  profile,
+  valid,
+  controlWarning,
+  toggle,
+  selectProfile,
+  load,
+} = useProxyState();
 
 onMounted(load);
 
@@ -18,6 +28,10 @@ const summary = computed(() =>
 function openOptions() {
   chrome.runtime.openOptionsPage();
 }
+
+function onProfileChange(event: Event) {
+  void selectProfile((event.target as HTMLSelectElement).value);
+}
 </script>
 
 <template>
@@ -28,24 +42,6 @@ function openOptions() {
         <h1>Detour</h1>
       </div>
       <div class="actions">
-        <button
-          class="gear"
-          type="button"
-          title="Settings"
-          aria-label="Settings"
-          @click="openOptions"
-        >
-          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-            <path
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z M19.4 13a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-2.82-1.17l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 13H4.5a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.17-2.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 11 4.6V4.5a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 2.82 1.17l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 11h.1a2 2 0 1 1 0 4h-.1Z"
-            />
-          </svg>
-        </button>
         <button
           class="switch"
           :class="{ on: enabled }"
@@ -63,10 +59,25 @@ function openOptions() {
       {{ enabled ? 'Proxy active' : 'Direct connection' }}
     </p>
 
-    <button class="summary" type="button" @click="openOptions">
-      <span class="summary-text" :class="{ unset: !valid }">{{ summary }}</span>
-      <span class="summary-edit">Edit</span>
-    </button>
+    <div class="profile-row">
+      <select
+        class="profile-picker"
+        :value="activeProfileId"
+        aria-label="Active profile"
+        @change="onProfileChange"
+      >
+        <option v-for="item in profiles" :key="item.id" :value="item.id">
+          {{ item.name }}
+        </option>
+      </select>
+      <button class="settings" type="button" @click="openOptions">Settings</button>
+    </div>
+
+    <div class="summary">
+      <span class="summary-text" :class="{ unset: !valid }">
+        {{ summary }}
+      </span>
+    </div>
 
     <p v-if="controlWarning" class="note warn">{{ controlWarning }}</p>
 
@@ -116,26 +127,6 @@ function openOptions() {
   gap: 8px;
 }
 
-.gear {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 26px;
-  padding: 0;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-  transition: color 0.15s, background 0.15s;
-}
-
-.gear:hover {
-  color: var(--fg);
-  background: var(--card);
-}
-
 .switch {
   position: relative;
   width: 46px;
@@ -182,27 +173,52 @@ function openOptions() {
   color: var(--accent);
 }
 
+.profile-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.profile-picker {
+  min-width: 0;
+  flex: 1;
+  padding: 8px 9px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--fg);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+
+.settings {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.settings:hover {
+  border-color: var(--accent);
+}
+
 .summary {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
   width: 100%;
   margin-bottom: 12px;
   padding: 10px 12px;
-  font-family: inherit;
   font-size: 13px;
-  text-align: left;
   color: var(--fg);
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 8px;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-
-.summary:hover {
-  border-color: var(--accent);
 }
 
 .summary-text {
@@ -210,13 +226,6 @@ function openOptions() {
 }
 
 .summary-text.unset {
-  color: var(--muted);
-}
-
-.summary-edit {
-  flex: 0 0 auto;
-  font-size: 11px;
-  font-weight: 500;
   color: var(--muted);
 }
 </style>
