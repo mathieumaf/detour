@@ -27,6 +27,8 @@ out of scope (it would require a native Network Extension).
 
 ## How it works
 
+- **Profiles** — save several named proxy configurations and switch the active
+  one from Settings. The active profile is what the popup toggle applies.
 - **Popup vs. settings** — the toolbar popup is a quick switch: connection
   status, the on/off toggle, a one-line summary of the configured proxy, and a
   connection test. The full configuration — server, credentials, bypass list,
@@ -44,8 +46,8 @@ out of scope (it would require a native Network Extension).
   bare host matches itself. Chromium consumes the list natively (with `<private>`
   expanded to its ranges); Firefox applies it per-request in the
   `proxy.onRequest` listener.
-- **Import / Export** — the settings page saves the current proxy config
-  (including the password) to a JSON file and loads it back, for backup or
+- **Import / Export** — the settings page saves all proxy profiles (including
+  passwords) to a JSON file and loads them back, for backup or
   moving between machines.
 - **State** lives in `chrome.storage.local` as the single source of truth shared
   between the popup, the settings page, and the background worker. The popup and

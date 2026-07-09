@@ -2,6 +2,7 @@
 import { onMounted } from 'vue';
 import { useProxyState } from '@/composables/useProxyState';
 import ProxyForm from '@/components/ProxyForm.vue';
+import ProfileSwitcher from '@/components/ProfileSwitcher.vue';
 import BypassList from '@/components/BypassList.vue';
 import ConnectionTest from '@/components/ConnectionTest.vue';
 import ImportExport from '@/components/ImportExport.vue';
@@ -18,6 +19,11 @@ onMounted(load);
       <h1>Detour</h1>
       <span class="sub">Settings</span>
     </header>
+
+    <section class="card">
+      <h2>Profiles</h2>
+      <ProfileSwitcher />
+    </section>
 
     <section class="card">
       <h2>Proxy server</h2>

@@ -16,16 +16,13 @@ import {
   type TestResult,
 } from '@/utils/proxy';
 
-// Shared store for a single page (popup or options). Defined at module scope so
-// every component reads and mutates the same reactive state without prop-
-// drilling. The popup and options page are separate documents with their own
-// instance of this module, so each subscribes to chrome.storage below to stay
-// in sync with edits made in the other — otherwise a stale `enabled` flag from
-// one view would clobber the proxy when the other view saves.
-
 const enabled = ref(false);
-const profile = reactive<ProxyProfile>({ ...DEFAULT_PROFILE });
-// Raw textarea content; parsed into profile.bypassList on save.
+const activeProfileId = ref(DEFAULT_PROFILE.id);
+const profiles = ref<ProxyProfile[]>([]);
+const profile = reactive<ProxyProfile>({
+  ...DEFAULT_PROFILE,
+  bypassList: [...DEFAULT_PROFILE.bypassList],
+});
 const bypassText = ref('');
 const controlWarning = ref('');
 const testing = ref(false);
@@ -34,29 +31,37 @@ const testResult = ref<TestResult | null>(null);
 const valid = computed(() => isProfileValid(profile));
 const supportsAuth = computed(() => authSupported(profile.scheme));
 
-// A plain, fully-detached copy of the profile. Vue's reactive() wraps nested
-// objects (here, bypassList) in Proxies, which the structured-clone used by
-// chrome.storage / sendMessage can't serialize — so we rebuild a flat object.
-function snapshot(): ProxyProfile {
+function copyProfile(source: ProxyProfile): ProxyProfile {
+  return { ...source, bypassList: [...source.bypassList] };
+}
+
+function profileSnapshot(): ProxyProfile {
+  return { ...profile, bypassList: parseBypassList(bypassText.value) };
+}
+
+function snapshot(): ProxyState {
+  const current = profileSnapshot();
   return {
-    scheme: profile.scheme,
-    host: profile.host,
-    port: profile.port,
-    username: profile.username,
-    password: profile.password,
-    bypassList: parseBypassList(bypassText.value),
+    enabled: enabled.value,
+    activeProfileId: activeProfileId.value,
+    profiles: profiles.value.map((item) =>
+      item.id === current.id ? current : copyProfile(item),
+    ),
   };
 }
 
-// Serialized form of our most recent write, so the storage listener can tell
-// our own change apart from one made by the other view and skip re-applying it
-// (which would reformat fields mid-edit).
 let lastWritten = '';
 
-function applyToView(s: ProxyState) {
-  enabled.value = s.enabled;
-  Object.assign(profile, { ...DEFAULT_PROFILE, ...s.profile });
-  bypassText.value = formatBypassList(profile.bypassList);
+function applyToView(state: ProxyState) {
+  const nextProfiles = state.profiles.map(copyProfile);
+  const selected =
+    nextProfiles.find((item) => item.id === state.activeProfileId) ?? nextProfiles[0];
+  if (!selected) return;
+  enabled.value = state.enabled;
+  activeProfileId.value = selected.id;
+  profiles.value = nextProfiles;
+  Object.assign(profile, copyProfile(selected));
+  bypassText.value = formatBypassList(selected.bypassList);
 }
 
 async function persist(state: ProxyState) {
@@ -70,19 +75,84 @@ async function load() {
 }
 
 async function save() {
-  // Editing the target invalidates any previous test result.
   testResult.value = null;
-  const next = snapshot();
+  const next = profileSnapshot();
+  next.name = next.name.trim() || DEFAULT_PROFILE.name;
+  profile.name = next.name;
   profile.bypassList = next.bypassList;
-  // Can't be active with an invalid target — flip off rather than apply garbage.
   if (enabled.value && !valid.value) enabled.value = false;
-  await persist({ enabled: enabled.value, profile: next });
+  await persist(snapshot());
   await checkControl();
 }
 
-// Mirror edits made in the other view (e.g. toggling in the popup while the
-// options page is open). Ignoring our own writes keeps the active field from
-// being reformatted out from under the cursor.
+function applySelected(next: ProxyProfile) {
+  activeProfileId.value = next.id;
+  Object.assign(profile, copyProfile(next));
+  bypassText.value = formatBypassList(next.bypassList);
+  testResult.value = null;
+}
+
+function newId(): string {
+  return crypto.randomUUID();
+}
+
+function unusedName(base: string): string {
+  const names = new Set(profiles.value.map((item) => item.name));
+  if (!names.has(base)) return base;
+  let number = 2;
+  while (names.has(`${base} ${number}`)) number += 1;
+  return `${base} ${number}`;
+}
+
+async function selectProfile(id: string) {
+  if (id === activeProfileId.value) return;
+  const next = snapshot().profiles.find((item) => item.id === id);
+  if (!next) return;
+  applySelected(next);
+  if (enabled.value && !valid.value) enabled.value = false;
+  await persist(snapshot());
+  await checkControl();
+}
+
+async function createProfile() {
+  const next: ProxyProfile = {
+    ...DEFAULT_PROFILE,
+    id: newId(),
+    name: unusedName('New profile'),
+    bypassList: [...DEFAULT_PROFILE.bypassList],
+  };
+  profiles.value = [...snapshot().profiles, next];
+  applySelected(next);
+  if (enabled.value) enabled.value = false;
+  await persist(snapshot());
+  await checkControl();
+}
+
+async function duplicateProfile() {
+  const source = profileSnapshot();
+  const next: ProxyProfile = {
+    ...source,
+    id: newId(),
+    name: unusedName(`${source.name} copy`),
+    bypassList: [...source.bypassList],
+  };
+  profiles.value = [...snapshot().profiles, next];
+  applySelected(next);
+  await persist(snapshot());
+  await checkControl();
+}
+
+async function deleteProfile() {
+  if (profiles.value.length <= 1) return;
+  const current = snapshot();
+  const remaining = current.profiles.filter((item) => item.id !== activeProfileId.value);
+  profiles.value = remaining;
+  applySelected(remaining[0]);
+  if (enabled.value && !valid.value) enabled.value = false;
+  await persist(snapshot());
+  await checkControl();
+}
+
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local' || !changes[STORAGE_KEY]) return;
   const next = changes[STORAGE_KEY].newValue as ProxyState | undefined;
@@ -97,7 +167,7 @@ async function runTest() {
   testing.value = true;
   testResult.value = null;
   try {
-    testResult.value = await testProxy(snapshot());
+    testResult.value = await testProxy(profileSnapshot());
   } catch (err) {
     testResult.value = { ok: false, error: (err as Error)?.message || 'Test failed.' };
   } finally {
@@ -105,7 +175,6 @@ async function runTest() {
   }
 }
 
-// Download the current profile (including unsaved edits) as a JSON file.
 function exportConfig() {
   const blob = new Blob([buildExport(snapshot())], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -116,14 +185,12 @@ function exportConfig() {
   URL.revokeObjectURL(url);
 }
 
-// Load a profile from a previously exported file and apply it. Throws on a
-// malformed file so the caller can surface the message; never enables a proxy
-// that the imported profile leaves invalid (save() handles that).
 async function importConfig(file: File): Promise<void> {
   const imported = parseImport(await file.text());
-  Object.assign(profile, imported);
-  bypassText.value = formatBypassList(profile.bypassList);
-  await save();
+  applyToView(imported);
+  if (enabled.value && !valid.value) enabled.value = false;
+  await persist(snapshot());
+  await checkControl();
 }
 
 async function toggle() {
@@ -148,6 +215,8 @@ async function checkControl() {
 export function useProxyState() {
   return {
     enabled,
+    activeProfileId,
+    profiles,
     profile,
     bypassText,
     controlWarning,
@@ -159,6 +228,10 @@ export function useProxyState() {
     save,
     runTest,
     toggle,
+    selectProfile,
+    createProfile,
+    duplicateProfile,
+    deleteProfile,
     exportConfig,
     importConfig,
   };

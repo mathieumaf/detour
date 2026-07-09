@@ -1,4 +1,4 @@
-import { isProfileValid, isBypassed, expandBypassForChromium } from '@/utils/proxy';
+import { activeProfile, isProfileValid, isBypassed, expandBypassForChromium } from '@/utils/proxy';
 import type { ProxyState, ProxyProfile } from '@/utils/proxy';
 
 // The proxy engine: two backends behind one contract. Chromium drives the
@@ -6,8 +6,9 @@ import type { ProxyState, ProxyProfile } from '@/utils/proxy';
 // listener, the only API that can authenticate SOCKS proxies.
 
 export async function applyState(s: ProxyState) {
-  if (s.enabled && isProfileValid(s.profile)) {
-    await enableProxy(s.profile);
+  const profile = activeProfile(s);
+  if (s.enabled && isProfileValid(profile)) {
+    await enableProxy(profile);
     setBadge(true);
   } else {
     await disableProxy();
