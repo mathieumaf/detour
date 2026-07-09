@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/mathieumaf/detour/compare/detour-v1.3.1...detour-v1.4.0) (2026-07-09)
+
+
+### Features
+
+* add named proxy profiles ([#31](https://github.com/mathieumaf/detour/issues/31)) ([a2327ef](https://github.com/mathieumaf/detour/commit/a2327ef5649fb9eaef048dc3a3ab755462082343))
+
 ## [1.3.1](https://github.com/mathieumaf/detour/compare/detour-v1.3.0...detour-v1.3.1) (2026-07-03)
 
 
