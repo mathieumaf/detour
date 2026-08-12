@@ -11,6 +11,8 @@
     "build:firefox": "wxt build -b firefox",
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
+    "zip:normalize": "bun scripts/normalize-zips.ts",
+    "zip:all": "bun run zip && bun run zip:firefox && bun run zip:normalize",
     "submit:firefox": "wxt submit --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip",
     "submit:chrome": "wxt submit --chrome-zip .output/*-chrome.zip",
     "compile": "vue-tsc --noEmit",
