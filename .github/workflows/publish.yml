@@ -92,12 +92,22 @@ jobs:
           FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: bun run submit:firefox
 
-      # Upload the new version to the Chrome Web Store. Like AMO, this only
-      # submits; Google's review still gates when it goes live.
+      # Upload the new version to the Chrome Web Store via API v2 (service
+      # account). Like AMO, this only submits; Google's review still gates
+      # when it goes live. CHROME_CANCEL_PENDING is always on so a leftover
+      # pending CWS review does not fail publish (Firefox is fast; Chrome
+      # pending would otherwise block recovery).
+      #
+      # v2 secrets must exist before merging a release-please PR (or before
+      # workflow_dispatch republish): CHROME_EXTENSION_ID, CHROME_PUBLISHER_ID,
+      # CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL, CHROME_SERVICE_ACCOUNT_PRIVATE_KEY.
+      # v1.1 OAuth secrets (CHROME_CLIENT_ID / SECRET / REFRESH_TOKEN) are unused.
       - name: Submit to Chrome Web Store
         env:
+          CHROME_API_VERSION: v2
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+          CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
+          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
+          CHROME_CANCEL_PENDING: true
         run: bun run submit:chrome
