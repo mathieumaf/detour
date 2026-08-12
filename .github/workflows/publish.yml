@@ -1,11 +1,14 @@
 name: Publish
 
 # Builds the store packages for a released tag, attaches them to the GitHub
-# Release, and submits the new version to Firefox Add-ons. Invoked two ways:
+# Release, and submits the new version to Firefox Add-ons / Chrome Web Store.
+# After zipping, scripts/normalize-zips.ts rewrites DOS timestamps so AMO
+# accepts WXT 0.21 (zero-zip) packages. Invoked two ways:
 #   - workflow_call: from release.yml right after a release is created.
 #   - workflow_dispatch: manually, to (re)build and (re)submit an existing tag
 #     — e.g. when an earlier auto-publish failed.
-# Either way it checks out the tag, so the build matches exactly what shipped.
+# Overlay the normalizer from this workflow's revision so older tags
+# (without the script) can still be republished via workflow_dispatch.
 
 on:
   workflow_call:
@@ -33,6 +36,18 @@ jobs:
         with:
           ref: ${{ inputs.tag }}
 
+      # Checkout uses the tag so the build matches the release, but older tags
+      # (e.g. detour-v1.4.1) predate zip normalization. workflow_dispatch still
+      # runs *this* workflow file from the selected branch (usually main), so
+      # overlay the normalizer from github.sha. Future tags already contain it.
+      - name: Overlay zip normalizer from workflow revision
+        run: |
+          mkdir -p scripts
+          git fetch --depth 1 origin "${GITHUB_SHA}:refs/tmp/workflow-sha"
+          git checkout refs/tmp/workflow-sha -- scripts/normalize-zips.ts
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+
       - uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: latest
@@ -44,6 +59,7 @@ jobs:
         run: |
           bun run zip
           bun run zip:firefox
+          bun scripts/normalize-zips.ts
 
       - name: Attach packages to the release
         env:
