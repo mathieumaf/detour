@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/mathieumaf/detour/compare/detour-v1.4.0...detour-v1.4.1) (2026-08-12)
+
+
+### Bug Fixes
+
+* complete WXT 0.21 migration so JS dependency bumps pass CI ([#38](https://github.com/mathieumaf/detour/issues/38)) ([764928f](https://github.com/mathieumaf/detour/commit/764928f48211625d9e20c735c7bfdebc2b14ee62))
+
 ## [1.4.0](https://github.com/mathieumaf/detour/compare/detour-v1.3.1...detour-v1.4.0) (2026-07-09)
 
 
