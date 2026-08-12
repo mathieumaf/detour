@@ -37,7 +37,7 @@ export async function loadState(): Promise<ProxyState> {
     : [sanitizeProfile(stored?.profile ?? DEFAULT_PROFILE, 0)];
   const activeProfileId = profiles.some((profile) => profile.id === stored?.activeProfileId)
     ? stored!.activeProfileId!
-    : profiles[0].id;
+    : (profiles[0]?.id ?? DEFAULT_PROFILE.id);
   return {
     enabled: stored?.enabled ?? DEFAULT_STATE.enabled,
     activeProfileId,
