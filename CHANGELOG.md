@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/mathieumaf/detour/compare/detour-v1.4.1...detour-v1.4.2) (2026-08-12)
+
+
+### Bug Fixes
+
+* normalize zip DOS dates so AMO accepts WXT 0.21 packages ([#40](https://github.com/mathieumaf/detour/issues/40)) ([d430155](https://github.com/mathieumaf/detour/commit/d430155a9fc980dde8dbdbb1ba417e210602deb3))
+
 ## [1.4.1](https://github.com/mathieumaf/detour/compare/detour-v1.4.0...detour-v1.4.1) (2026-08-12)
 
 
