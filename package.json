@@ -24,6 +24,7 @@
   "devDependencies": {
     "@types/chrome": "^0.2.5",
     "@wxt-dev/module-vue": "^1.0.3",
+    "publish-browser-extension": "^6.1.1",
     "typescript": "^5.9.3",
     "vite": "^8.2.1",
     "vue-tsc": "^3.3.9",
@@ -31,5 +32,8 @@
   },
   "trustedDependencies": [
     "spawn-sync"
-  ]
+  ],
+  "overrides": {
+    "publish-browser-extension": "6.1.1"
+  }
 }

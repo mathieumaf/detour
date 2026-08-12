@@ -10,12 +10,16 @@
       "devDependencies": {
         "@types/chrome": "^0.2.5",
         "@wxt-dev/module-vue": "^1.0.3",
+        "publish-browser-extension": "^6.1.1",
         "typescript": "^5.9.3",
         "vite": "^8.2.1",
         "vue-tsc": "^3.3.9",
         "wxt": "^0.21.3",
       },
     },
+  },
+  "overrides": {
+    "publish-browser-extension": "6.1.1",
   },
   "packages": {
     "@1natsu/wait-element": ["@1natsu/wait-element@4.2.0", "", { "dependencies": { "defu": "^6.1.4", "many-keys-map": "^3.0.0" } }, "sha512-Om0Q+WE9mNrpY4AwMTvkFiYHv8VM7TML3PvOqXy+w6kAjLjKhGYHYX+305+a6J8RVpds9s7IF2Z5aOPYwULFNw=="],
@@ -302,7 +306,7 @@
 
     "postcss": ["postcss@8.5.26", "", { "dependencies": { "nanoid": "^3.3.17", "picocolors": "^1.1.1", "source-map-js": "^1.2.1" } }, "sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ=="],
 
-    "publish-browser-extension": ["publish-browser-extension@6.0.0", "", { "dependencies": { "@topcli/prompts": "^4.0.0", "cac": "^7.0.0", "tasuku": "^2.3.0" }, "bin": { "publish-extension": "bin/publish-extension.mjs" } }, "sha512-DStg6sPhxBBECBQmx2hAT3MJY0BIdkx1JCiL3laowL/QHi4Wi2mE3BXCGMXFgU63b2T9JVR+9uD8XPASfZIQhA=="],
+    "publish-browser-extension": ["publish-browser-extension@6.1.1", "", { "dependencies": { "@topcli/prompts": "^4.0.0", "cac": "^7.0.0", "tasuku": "^2.3.0" }, "bin": { "publish-extension": "bin/publish-extension.mjs" } }, "sha512-ovfBOz+cZIOBHZ+oxTfpv1kSGU7ruzy8CXoFGvhXsUbJuty45srGzf1ufEePs69virOWXfFbhZRoNQUdgPvwXA=="],
 
     "quansync": ["quansync@0.2.11", "", {}, "sha512-AifT7QEbW9Nri4tAwR5M/uzpBuqfZf+zwaEM/QkzEjj7NBuFD2rBuy0K3dE+8wltbezDV7JMA0WfnCPYRSYbXA=="],
 
