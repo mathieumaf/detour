@@ -14,7 +14,7 @@
     "zip:normalize": "bun scripts/normalize-zips.ts",
     "zip:all": "bun run zip && bun run zip:firefox && bun run zip:normalize",
     "submit:firefox": "wxt submit --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip",
-    "submit:chrome": "wxt submit --chrome-zip .output/*-chrome.zip",
+    "submit:chrome": "wxt submit --chrome-zip .output/*-chrome.zip --chrome-api-version v2 --chrome-cancel-pending",
     "compile": "vue-tsc --noEmit",
     "postinstall": "wxt prepare"
   },
