@@ -50,6 +50,9 @@ export const DEFAULT_STATE: ProxyState = {
 };
 
 export function activeProfile(state: ProxyState): ProxyProfile {
-  return state.profiles.find((profile) => profile.id === state.activeProfileId)
-    ?? state.profiles[0];
+  return (
+    state.profiles.find((profile) => profile.id === state.activeProfileId) ??
+    state.profiles[0] ??
+    DEFAULT_PROFILE
+  );
 }

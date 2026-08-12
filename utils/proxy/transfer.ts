@@ -76,7 +76,7 @@ export function parseImport(text: string): ProxyState {
       if (profiles.length) {
         const activeProfileId = profiles.some((profile) => profile.id === state.activeProfileId)
           ? state.activeProfileId as string
-          : profiles[0].id;
+          : (profiles[0]?.id ?? DEFAULT_PROFILE.id);
         return { enabled: state.enabled === true, activeProfileId, profiles };
       }
     }

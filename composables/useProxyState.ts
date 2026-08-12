@@ -147,7 +147,9 @@ async function deleteProfile() {
   const current = snapshot();
   const remaining = current.profiles.filter((item) => item.id !== activeProfileId.value);
   profiles.value = remaining;
-  applySelected(remaining[0]);
+  const next = remaining[0];
+  if (!next) return;
+  applySelected(next);
   if (enabled.value && !valid.value) enabled.value = false;
   await persist(snapshot());
   await checkControl();

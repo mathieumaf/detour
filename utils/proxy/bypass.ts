@@ -30,15 +30,18 @@ function parseIp(input: string): number[] | null {
   return null;
 }
 
-function parseIpv4(s: string): number[] | null {
-  const bytes: number[] = [];
-  for (const part of s.split('.')) {
-    if (!/^\d{1,3}$/.test(part)) return null;
+function parseIpv4(s: string): [number, number, number, number] | null {
+  const parts = s.split('.');
+  if (parts.length !== 4) return null;
+  const bytes: [number, number, number, number] = [0, 0, 0, 0];
+  for (let i = 0; i < 4; i++) {
+    const part = parts[i];
+    if (part === undefined || !/^\d{1,3}$/.test(part)) return null;
     const n = Number(part);
     if (n > 255) return null;
-    bytes.push(n);
+    bytes[i] = n;
   }
-  return bytes.length === 4 ? bytes : null;
+  return bytes;
 }
 
 function parseIpv6(input: string): number[] | null {
@@ -57,6 +60,7 @@ function parseIpv6(input: string): number[] | null {
     const tokens = part.split(':');
     for (let i = 0; i < tokens.length; i++) {
       const t = tokens[i];
+      if (t === undefined) return null;
       if (t.includes('.')) {
         if (i !== tokens.length - 1) return null; // IPv4 only allowed last
         const v4 = parseIpv4(t);
@@ -70,14 +74,14 @@ function parseIpv6(input: string): number[] | null {
     return groups;
   };
 
-  const head = toGroups(halves[0]);
+  const head = toGroups(halves[0] ?? '');
   if (!head) return null;
 
   let groups: number[];
   if (halves.length === 1) {
     groups = head; // no "::" — must be a full address
   } else {
-    const tail = toGroups(halves[1]);
+    const tail = toGroups(halves[1] ?? '');
     if (!tail) return null;
     const missing = 8 - head.length - tail.length;
     if (missing < 1) return null; // "::" must stand in for at least one group
@@ -113,7 +117,10 @@ function ipInCidr(host: number[], net: Cidr): boolean {
   for (let i = 0; i < host.length && bits > 0; i++) {
     const take = Math.min(8, bits);
     const mask = (0xff << (8 - take)) & 0xff;
-    if ((host[i] & mask) !== (net.bytes[i] & mask)) return false;
+    const hostByte = host[i];
+    const netByte = net.bytes[i];
+    if (hostByte === undefined || netByte === undefined) return false;
+    if ((hostByte & mask) !== (netByte & mask)) return false;
     bits -= take;
   }
   return true;
