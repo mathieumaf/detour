@@ -7,8 +7,9 @@ name: Publish
 #   - workflow_call: from release.yml right after a release is created.
 #   - workflow_dispatch: manually, to (re)build and (re)submit an existing tag
 #     — e.g. when an earlier auto-publish failed.
-# Overlay the normalizer from this workflow's revision so older tags
-# (without the script) can still be republished via workflow_dispatch.
+# Overlay the zip normalizer and publish-browser-extension ≥6.1.1 from this
+# workflow's revision so older tags can still be republished via
+# workflow_dispatch (AMO FormData filename / pbe #91).
 
 on:
   workflow_call:
@@ -54,6 +55,22 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      # Checkout uses the tag, so older tags (e.g. detour-v1.4.2) still lock
+      # publish-browser-extension@6.0.0. That version uploads zips as a FormData
+      # blob with no filename; AMO parse_addon then rejects with
+      # unsupported_filetype / "Upload is not valid". 6.1.0+ includes the
+      # filename (pbe #91). Force-install so workflow_dispatch republishes pick
+      # up the fix without rewriting the tag. Frozen install above still pins
+      # everything else to the tag's lockfile.
+      #
+      # A root-only bun add is not enough: wxt submit loads
+      # publish-browser-extension via node_modules/wxt/bin, and Bun will keep
+      # a nested 6.0.0 there unless overrides force 6.1.1 everywhere.
+      - name: Overlay publish-browser-extension 6.1.1
+        run: |
+          bun pm pkg set overrides.publish-browser-extension=6.1.1
+          bun add -d publish-browser-extension@6.1.1
 
       - name: Build and zip both targets
         run: |
