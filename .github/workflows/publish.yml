@@ -6,7 +6,8 @@ name: Publish
 # accepts WXT 0.21 (zero-zip) packages. Invoked two ways:
 #   - workflow_call: from release.yml right after a release is created.
 #   - workflow_dispatch: manually, to (re)build and (re)submit an existing tag
-#     — e.g. when an earlier auto-publish failed.
+#     — e.g. when an earlier auto-publish failed. skip_firefox skips AMO when
+#     that version is already on Firefox (Chrome-only recovery).
 # Overlay the zip normalizer and publish-browser-extension ≥6.1.1 from this
 # workflow's revision so older tags can still be republished via
 # workflow_dispatch (AMO FormData filename / pbe #91).
@@ -18,12 +19,22 @@ on:
         description: Release tag to build and submit (e.g. detour-v1.1.0)
         type: string
         required: true
+      skip_firefox:
+        description: Skip Firefox Add-ons submit (Chrome-only republish)
+        type: boolean
+        required: false
+        default: false
   workflow_dispatch:
     inputs:
       tag:
         description: Existing release tag to (re)build and submit (e.g. detour-v1.1.0)
         type: string
         required: true
+      skip_firefox:
+        description: Skip Firefox Add-ons submit (Chrome-only republish of a version AMO already has)
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: write
@@ -85,7 +96,10 @@ jobs:
 
       # Upload the new version to AMO. This only submits it; Mozilla's review
       # still gates when it goes live. Source zip is required (the build is bundled).
+      # skip_firefox is for Chrome-only republish of a tag AMO already accepted
+      # (re-submit would 400 "version already exists" and block Chrome).
       - name: Submit to Firefox Add-ons
+        if: ${{ !inputs.skip_firefox }}
         env:
           FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
           FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
@@ -110,4 +124,13 @@ jobs:
           CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
           CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
           CHROME_CANCEL_PENDING: true
-        run: bun run submit:chrome
+        run: |
+          # GCP service-account JSON stores private_key with literal \n sequences.
+          # Pasting that into a GitHub secret often keeps \n as two characters
+          # (and surrounding quotes) instead of real PEM newlines. OpenSSL then
+          # fails with ERR_OSSL_UNSUPPORTED (error:1E08010C:DECODER routines::unsupported).
+          key="$CHROME_SERVICE_ACCOUNT_PRIVATE_KEY"
+          key="${key%\"}"; key="${key#\"}"
+          key="${key//$'\\n'/$'\n'}"
+          export CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="$key"
+          bun run submit:chrome
