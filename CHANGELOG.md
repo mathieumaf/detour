@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.3](https://github.com/mathieumaf/detour/compare/detour-v1.4.2...detour-v1.4.3) (2026-08-12)
+
+
+### Bug Fixes
+
+* **chrome:** migrate CWS auto-submit to API v2 service account ([#43](https://github.com/mathieumaf/detour/issues/43)) ([ff7248c](https://github.com/mathieumaf/detour/commit/ff7248c4b06ed81e2e5f5d157450c1eb6fcb9c63))
+
 ## [1.4.2](https://github.com/mathieumaf/detour/compare/detour-v1.4.1...detour-v1.4.2) (2026-08-12)
 
 
