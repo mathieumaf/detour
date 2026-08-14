@@ -153,6 +153,21 @@ export function expandBypassForChromium(list: string[]): string[] {
   return out;
 }
 
+// True when `url`'s host matches a single bypass/rule pattern. Rules reuse
+// this so they cannot drift from the bypass list's host language.
+export function matchHostPattern(url: string, pattern: string): boolean {
+  return isBypassed(url, [pattern]);
+}
+
+// A usable bypass/rule pattern: <local>, <private>, a CIDR, or a host / wildcard.
+export function isValidHostPattern(raw: string): boolean {
+  const entry = raw.trim().toLowerCase();
+  if (!entry || /\s/.test(entry)) return false;
+  if (entry === '<local>' || entry === '<private>') return true;
+  if (entry.includes('/')) return parseCidr(entry) !== null;
+  return true;
+}
+
 // Does this URL match any bypass entry? Mirrors a pragmatic subset of Chromium's
 // proxy bypass rules so Firefox (which has no native bypassList) behaves the same:
 //   <local>          localhost, loopback, and dotless hostnames

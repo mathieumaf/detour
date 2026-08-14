@@ -1,5 +1,6 @@
 import { STORAGE_KEY, DEFAULT_PROFILE, DEFAULT_STATE } from './types';
 import type { ProxyProfile, ProxyState } from './types';
+import { sanitizeRules } from './rules';
 
 function sanitizeProfile(raw: Partial<ProxyProfile>, index: number): ProxyProfile {
   const port = Number(raw.port);
@@ -38,10 +39,13 @@ export async function loadState(): Promise<ProxyState> {
   const activeProfileId = profiles.some((profile) => profile.id === stored?.activeProfileId)
     ? stored!.activeProfileId!
     : (profiles[0]?.id ?? DEFAULT_PROFILE.id);
+  const profileIds = new Set(profiles.map((profile) => profile.id));
   return {
     enabled: stored?.enabled ?? DEFAULT_STATE.enabled,
     activeProfileId,
     profiles,
+    // Missing rules (pre-1.5 state) become an empty list.
+    rules: sanitizeRules(stored?.rules, profileIds),
   };
 }
 

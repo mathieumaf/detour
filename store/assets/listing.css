@@ -358,3 +358,48 @@ body {
 .btn-row .testbtn {
   flex: 1;
 }
+
+.rule {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  gap: 6px 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rule:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.rule .f-input {
+  font-size: 12px;
+}
+
+.rule .f-input.mono {
+  font-size: 12px;
+}
+
+.rule-ops {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 6px;
+}
+
+.rule-ops .testbtn {
+  width: auto;
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  font-size: 11px;
+}
+
+.empty {
+  padding: 14px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+  text-align: center;
+  background: var(--input-bg);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}

@@ -13,17 +13,17 @@
         gap: 56px;
         padding: 0 96px;
       }
-      .cap { flex: 1 1 auto; max-width: 540px; }
-      .cap .big { font-size: 50px; line-height: 1.08; letter-spacing: -0.02em; display: block; }
-      .cap .lead { font-size: 22px; margin-top: 20px; }
+      .cap { flex: 1 1 auto; max-width: 520px; }
+      .cap .big { font-size: 48px; line-height: 1.08; letter-spacing: -0.02em; display: block; }
+      .cap .lead { font-size: 21px; margin-top: 20px; }
       .device { flex: 0 0 auto; }
     </style>
   </head>
   <body>
     <div class="stage">
       <div class="cap">
-        <span class="big">Every profile,<br />in one place</span>
-        <span class="lead">Create and manage saved proxies, then switch the active one from the toolbar.</span>
+        <span class="big">Route by host,<br />not by hand</span>
+        <span class="lead">Send github.com through one profile, private networks Direct, everything else through the active profile.</span>
       </div>
 
       <div class="device">
@@ -38,47 +38,65 @@
             <h2>Profiles</h2>
             <div class="f">
               <span class="f-label">Active profile</span>
-              <div class="f-input">Work proxy ▾</div>
-            </div>
-            <div class="row">
-              <div class="f"><span class="f-label">Profile name</span><div class="f-input">Work proxy</div></div>
-              <div class="f port"><span class="f-label">&nbsp;</span><div class="f-input" style="text-align:center">New</div></div>
-            </div>
-            <div class="btn-row">
-              <div class="testbtn">Duplicate</div>
-              <div class="testbtn">Delete</div>
+              <div class="f-input">Home proxy ▾</div>
             </div>
           </div>
 
           <div class="card">
-            <h2>Proxy server</h2>
-            <div class="f">
-              <span class="f-label">Type</span>
-              <div class="f-input">SOCKS5</div>
+            <h2>Rules</h2>
+            <div class="rule">
+              <div class="f">
+                <span class="f-label">Match</span>
+                <div class="f-input mono">github.com</div>
+              </div>
+              <div class="f">
+                <span class="f-label">Action</span>
+                <div class="f-input">Work proxy ▾</div>
+              </div>
+              <div class="rule-ops">
+                <div class="testbtn">Up</div>
+                <div class="testbtn">Down</div>
+                <div class="testbtn">Delete</div>
+              </div>
             </div>
-            <div class="row">
-              <div class="f"><span class="f-label">Host</span><div class="f-input">10.8.0.1</div></div>
-              <div class="f port"><span class="f-label">Port</span><div class="f-input">1080</div></div>
+            <div class="rule">
+              <div class="f">
+                <span class="f-label">Match</span>
+                <div class="f-input mono">&lt;private&gt;</div>
+              </div>
+              <div class="f">
+                <span class="f-label">Action</span>
+                <div class="f-input">Direct ▾</div>
+              </div>
+              <div class="rule-ops">
+                <div class="testbtn">Up</div>
+                <div class="testbtn">Down</div>
+                <div class="testbtn">Delete</div>
+              </div>
             </div>
-            <div class="f">
-              <span class="f-label">Username <em style="opacity:.7;font-style:normal">(optional)</em></span>
-              <div class="f-input">alice</div>
+            <div class="rule">
+              <div class="f">
+                <span class="f-label">Match</span>
+                <div class="f-input mono">10.0.0.0/8</div>
+              </div>
+              <div class="f">
+                <span class="f-label">Action</span>
+                <div class="f-input">Direct ▾</div>
+              </div>
+              <div class="rule-ops">
+                <div class="testbtn">Up</div>
+                <div class="testbtn">Down</div>
+                <div class="testbtn">Delete</div>
+              </div>
             </div>
+            <div class="testbtn" style="width:auto;align-self:flex-start;padding:6px 10px;font-size:12px">Add rule</div>
           </div>
 
           <div class="card">
             <h2>Bypass list</h2>
             <div class="f">
-              <span class="f-label">Hosts that connect directly</span>
-              <div class="f-input mono">&lt;local&gt;<br />*.internal.example.com<br />10.0.0.0/8</div>
-            </div>
-          </div>
-
-          <div class="card">
-            <h2>Backup</h2>
-            <div class="btn-row">
-              <div class="testbtn">Export</div>
-              <div class="testbtn">Import</div>
+              <span class="f-label">Hosts that skip the selected proxy</span>
+              <div class="f-input mono">&lt;local&gt;<br />*.internal.example.com</div>
             </div>
           </div>
         </div>

@@ -3,9 +3,9 @@
 **Detour does not collect, store, or transmit any personal data.**
 
 The proxy settings you enter — server type, host, port, optional username and
-password, and bypass list — are saved only in your browser's local storage
-(`chrome.storage.local`). They never leave your device and are never sent to the
-developer or any third party.
+password, bypass list, and routing rules — are saved only in your browser's
+local storage (`chrome.storage.local`). They never leave your device and are
+never sent to the developer or any third party.
 
 Detour requests broad permissions (`proxy`, `webRequest`, and host access)
 solely to:
@@ -27,4 +27,4 @@ policy is a public Gist holding the policy text above. Keep that text in sync
 when editing here: https://gist.github.com/mathieumaf/5f62915d442b39082544eb62c963da65
 -->
 
-_Last updated: 2026-06-24_
+_Last updated: 2026-08-14_

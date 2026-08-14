@@ -28,14 +28,22 @@ out of scope (it would require a native Network Extension).
 ## How it works
 
 - **Profiles** — save several named proxy configurations and switch the active
-  one from Settings. The active profile is what the popup toggle applies.
+  one from Settings. The active profile is the fallback the popup toggle
+  applies when no routing rule matches.
+- **Rules** — an ordered list on the settings page. First match wins: send a
+  host through a chosen profile or Direct (`github.com`, `*.example.com`,
+  `<local>`, `<private>`, `10.0.0.0/8`). Unmatched hosts use the active
+  profile. Chromium compiles the list into a PAC script; Firefox evaluates it
+  per request. The popup stays a toggle + profile picker.
 - **Popup vs. settings** — the toolbar popup is a quick switch: connection
   status, the on/off toggle, a one-line summary of the configured proxy, and a
   connection test. The full configuration — server, credentials, bypass list,
-  and import/export — lives on a dedicated settings page opened from the popup's
-  gear icon.
-- **Background service worker** applies the proxy via `chrome.proxy.settings`
-  when enabled, and releases it (falling back to system settings) when disabled.
+  routing rules, and import/export — lives on a dedicated settings page opened
+  from the popup's Settings button.
+- **Background service worker** applies the proxy when enabled, and releases it
+  (falling back to system settings) when disabled. With no rules, Chromium uses
+  `chrome.proxy.settings` in `fixed_servers` mode. With rules, it installs a
+  generated PAC (`FindProxyForURL`). Firefox always uses `proxy.onRequest`.
 - **Proxy authentication** for HTTP/HTTPS is supplied through
   `webRequest.onAuthRequired` (using the MV3 `webRequestAuthProvider`
   permission).
@@ -46,8 +54,8 @@ out of scope (it would require a native Network Extension).
   bare host matches itself. Chromium consumes the list natively (with `<private>`
   expanded to its ranges); Firefox applies it per-request in the
   `proxy.onRequest` listener.
-- **Import / Export** — the settings page saves all proxy profiles (including
-  passwords) to a JSON file and loads them back, for backup or
+- **Import / Export** — the settings page saves all proxy profiles and routing
+  rules (including passwords) to a JSON file and loads them back, for backup or
   moving between machines.
 - **State** lives in `chrome.storage.local` as the single source of truth shared
   between the popup, the settings page, and the background worker. The popup and
@@ -72,6 +80,7 @@ bun run dev:firefox  # launches Firefox with the extension loaded
 bun run build        # production build → .output/chrome-mv3
 bun run build:firefox
 bun run compile      # type-check
+bun test             # unit tests (rule matching + PAC)
 ```
 
 Load an unpacked Chromium build from `.output/chrome-mv3` via

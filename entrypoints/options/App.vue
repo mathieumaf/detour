@@ -4,6 +4,7 @@ import { useProxyState } from '@/composables/useProxyState';
 import ProxyForm from '@/components/ProxyForm.vue';
 import ProfileSwitcher from '@/components/ProfileSwitcher.vue';
 import BypassList from '@/components/BypassList.vue';
+import RuleList from '@/components/RuleList.vue';
 import ConnectionTest from '@/components/ConnectionTest.vue';
 import ImportExport from '@/components/ImportExport.vue';
 
@@ -35,6 +36,11 @@ onMounted(load);
     <section class="card">
       <h2>Bypass list</h2>
       <BypassList />
+    </section>
+
+    <section class="card">
+      <h2>Rules</h2>
+      <RuleList />
     </section>
 
     <section class="card">

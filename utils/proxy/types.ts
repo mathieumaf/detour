@@ -17,10 +17,24 @@ export interface ProxyProfile {
   bypassList: string[];
 }
 
+// A host pattern that selects a profile or Direct. Evaluated top-down;
+// first match wins. Unmatched hosts fall back to the active profile.
+export const DIRECT_ACTION = 'direct';
+
+export interface RoutingRule {
+  id: string;
+  // Same pattern language as the bypass list: exact host, *.domain.tld,
+  // .domain.tld, CIDR, <local>, <private>.
+  match: string;
+  // Profile id, or DIRECT_ACTION.
+  action: string;
+}
+
 export interface ProxyState {
   enabled: boolean;
   activeProfileId: string;
   profiles: ProxyProfile[];
+  rules: RoutingRule[];
 }
 
 export interface TestResult {
@@ -47,6 +61,7 @@ export const DEFAULT_STATE: ProxyState = {
   enabled: false,
   activeProfileId: DEFAULT_PROFILE.id,
   profiles: [{ ...DEFAULT_PROFILE, bypassList: [...DEFAULT_PROFILE.bypassList] }],
+  rules: [],
 };
 
 export function activeProfile(state: ProxyState): ProxyProfile {
