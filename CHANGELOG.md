@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/mathieumaf/detour/compare/detour-v1.4.3...detour-v1.5.0) (2026-08-14)
+
+
+### Features
+
+* **proxy:** add auto-switch routing rules ([#49](https://github.com/mathieumaf/detour/issues/49)) ([76f8d45](https://github.com/mathieumaf/detour/commit/76f8d45f30c1b910c418392f820d2e225d1dec32))
+
 ## [1.4.3](https://github.com/mathieumaf/detour/compare/detour-v1.4.2...detour-v1.4.3) (2026-08-12)
 
 
