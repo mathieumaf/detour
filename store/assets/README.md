@@ -56,3 +56,29 @@ cp ../chrome/screenshot-*.png ../firefox/
 
 Note: headless Chrome writes the PNG and then sometimes fails to exit, so the
 snippet waits for the file and kills the process.
+
+Linux (Google Chrome or Chromium + ImageMagick), same 2× then downscale. Use an
+opaque white background and flatten to 24-bit PNG with no alpha:
+
+```sh
+CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+cd store/assets
+
+render() { # html width height outfile
+  tmp="${4%.png}@2x.png"
+  "$CHROME" --headless=new --disable-gpu --no-sandbox --hide-scrollbars \
+    --user-data-dir=/tmp/detour-shot --force-device-scale-factor=2 \
+    --virtual-time-budget=2500 --default-background-color=ffffffff \
+    --window-size=$2,$3 --screenshot="$tmp" "file://$PWD/$1"
+  convert "$tmp" -resize ${2}x${3}! -background white -alpha remove -alpha off \
+    PNG24:"$4"
+  rm -f "$tmp"
+}
+
+render marquee-1400x560.html             1400 560  ../chrome/marquee-1400x560.png
+render tile-440x280.html                 440  280  ../chrome/promo-small-440x280.png
+render screenshot-1-popup-1280x800.html  1280 800  ../chrome/screenshot-1-popup-1280x800.png
+render screenshot-2-settings-1280x800.html 1280 800 ../chrome/screenshot-2-settings-1280x800.png
+render screenshot-3-features-1280x800.html 1280 800 ../chrome/screenshot-3-features-1280x800.png
+cp ../chrome/screenshot-*.png ../firefox/
+```

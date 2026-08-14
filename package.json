@@ -16,6 +16,7 @@
     "submit:firefox": "wxt submit --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip",
     "submit:chrome": "wxt submit --chrome-zip .output/*-chrome.zip --chrome-api-version v2 --chrome-cancel-pending",
     "compile": "vue-tsc --noEmit",
+    "test": "bun test",
     "postinstall": "wxt prepare"
   },
   "dependencies": {

@@ -1,4 +1,5 @@
-import { activeProfile, authSupported } from '@/utils/proxy';
+import { DIRECT_ACTION, authSupported, resolveRoute } from '@/utils/proxy';
+import type { ProxyProfile, ProxyState } from '@/utils/proxy';
 import { ctx, handledAuth } from './context';
 
 // Proxy authentication for HTTP/HTTPS. SOCKS auth is handled inline by Firefox's
@@ -25,11 +26,17 @@ export function registerAuthHandler() {
   }
 }
 
+function profileForRequest(url: string, state: ProxyState): ProxyProfile | null {
+  const route = resolveRoute(url, state);
+  return route === DIRECT_ACTION ? null : route;
+}
+
 function resolveAuth(
   details: chrome.webRequest.OnAuthRequiredDetails,
 ): chrome.webRequest.BlockingResponse {
-  // A running test takes precedence; otherwise use the saved profile if active.
-  const p = ctx.testProfile ?? (ctx.state?.enabled ? activeProfile(ctx.state) : null);
+  // A running test takes precedence; otherwise pick the profile the request
+  // would actually use (a matching rule, or the active fallback).
+  const p = ctx.testProfile ?? (ctx.state?.enabled ? profileForRequest(details.url, ctx.state) : null);
 
   if (!details.isProxy || !p || !authSupported(p.scheme) || !p.username) {
     return {};

@@ -8,8 +8,8 @@ into the dashboard. Character limits are noted per field — stay within them.
 
 ## Shared positioning
 
-**One-liner:** A simple, intuitive proxy switcher — save profiles and switch
-between them from your toolbar.
+**One-liner:** A simple, intuitive proxy switcher — save profiles, add
+auto-switch rules, and switch from your toolbar.
 
 **Tone:** plain, honest, privacy-first. No hype, no "best ever", no emoji in the
 description body.
@@ -22,8 +22,8 @@ description body.
 Detour — Proxy Switcher
 
 ### Summary / short description (max 132)
-Switch HTTP, HTTPS, or SOCKS proxy profiles from your toolbar. With auth, a
-bypass list, and a built-in connection test.
+Switch HTTP, HTTPS, or SOCKS proxy profiles from your toolbar. Auto-switch
+rules, auth, a bypass list, and a connection test.
 
 ### Detailed description (max 16,000)
 Detour is a simple, intuitive proxy switcher. Save configurations as named
@@ -36,14 +36,18 @@ Features:
 - Toggle the active proxy on or off in one click.
 - Supports HTTP, HTTPS, SOCKS4, and SOCKS5 proxies.
 - Username/password authentication for HTTP and HTTPS proxies.
-- Bypass list: choose hosts that connect directly, skipping the proxy. Use
-  <local> for localhost, <private> for all private networks, *.example.com for
-  subdomains, or 10.0.0.0/8 for an IP range.
+- Auto-switch rules: an ordered list that sends matching hosts through a
+  chosen profile or Direct. First match wins; everything else uses the active
+  profile. Match an exact host, *.example.com, <local>, <private>, or a CIDR
+  such as 10.0.0.0/8.
+- Bypass list: choose hosts that connect directly, skipping the selected
+  proxy. Use <local> for localhost, <private> for all private networks,
+  *.example.com for subdomains, or 10.0.0.0/8 for an IP range.
 - Built-in connection test that reports your exit IP and latency before you
   commit.
 - Dedicated settings page to create, rename, duplicate, or delete profiles,
-  with import/export of all profiles to a JSON file for backup or moving
-  between machines.
+  with import/export of all profiles and rules to a JSON file for backup or
+  moving between machines.
 - An ON badge on the toolbar icon shows at a glance when the proxy is active.
 
 Privacy:
@@ -66,9 +70,9 @@ Tools / Productivity
 Detour — Proxy Switcher
 
 ### Summary (max 250)
-A simple, intuitive proxy switcher. Save and switch HTTP, HTTPS, SOCKS4, or
-SOCKS5 proxy profiles from your toolbar — with authentication (including
-SOCKS), a bypass list, a connection test, and import/export. No data collection.
+A simple, intuitive proxy switcher. Save and switch HTTP, HTTPS, or SOCKS
+profiles from your toolbar — with authentication (including SOCKS), auto-switch
+rules, a bypass list, a connection test, and import/export. No data collection.
 
 ### Description
 Detour is a simple, intuitive proxy switcher. Save configurations as named
@@ -82,14 +86,18 @@ Features:
 - Supports HTTP, HTTPS, SOCKS4, and SOCKS5 proxies.
 - Username/password authentication for every scheme — including SOCKS, which
   Firefox supports natively.
-- Bypass list: choose hosts that connect directly, skipping the proxy. Use
-  <local> for localhost, <private> for all private networks, *.example.com for
-  subdomains, or 10.0.0.0/8 for an IP range.
+- Auto-switch rules: an ordered list that sends matching hosts through a
+  chosen profile or Direct. First match wins; everything else uses the active
+  profile. Match an exact host, *.example.com, <local>, <private>, or a CIDR
+  such as 10.0.0.0/8.
+- Bypass list: choose hosts that connect directly, skipping the selected
+  proxy. Use <local> for localhost, <private> for all private networks,
+  *.example.com for subdomains, or 10.0.0.0/8 for an IP range.
 - Built-in connection test that reports your exit IP and latency before you
   commit.
 - Dedicated settings page to create, rename, duplicate, or delete profiles,
-  with import/export of all profiles to a JSON file for backup or moving
-  between machines.
+  with import/export of all profiles and rules to a JSON file for backup or
+  moving between machines.
 - An ON badge on the toolbar icon shows at a glance when the proxy is active.
 
 Privacy:
@@ -101,10 +109,10 @@ never sent to us or anyone else. Detour is open source.
 
 1. Switch between saved proxy profiles directly from the toolbar, toggle the
    active proxy, and test the connection.
-2. Create, name, duplicate, and manage proxy profiles alongside server
-   settings, bypass rules, and backup.
-3. HTTP, HTTPS, and SOCKS support, authentication, named profiles, bypass
-   rules, connection testing, and no data collection.
+2. Create profiles and auto-switch rules: send a host through one proxy,
+   private networks Direct, everything else through another.
+3. HTTP, HTTPS, and SOCKS support, authentication, named profiles, auto-switch
+   rules, bypass lists, connection testing, and no data collection.
 
 ### Categories
 Privacy & Security / Other
@@ -116,8 +124,8 @@ Privacy & Security / Other
 Reviewers ask why each permission is needed. Reuse these verbatim.
 
 - **proxy** — core feature: apply and release the proxy configuration.
-- **storage** — persist the user's proxy profiles and active selection locally
-  between sessions.
+- **storage** — persist the user's proxy profiles, routing rules, and active
+  selection locally between sessions.
 - **webRequest** — detect proxy authentication challenges (onAuthRequired).
 - **webRequestAuthProvider** (Chromium) / **webRequestBlocking** (Firefox) —
   supply the saved username/password in response to a proxy auth challenge.

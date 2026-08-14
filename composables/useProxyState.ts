@@ -10,15 +10,19 @@ import {
   buildExport,
   parseImport,
   DEFAULT_PROFILE,
+  DIRECT_ACTION,
   STORAGE_KEY,
+  dropRulesForProfile,
   type ProxyProfile,
   type ProxyState,
+  type RoutingRule,
   type TestResult,
 } from '@/utils/proxy';
 
 const enabled = ref(false);
 const activeProfileId = ref(DEFAULT_PROFILE.id);
 const profiles = ref<ProxyProfile[]>([]);
+const rules = ref<RoutingRule[]>([]);
 const profile = reactive<ProxyProfile>({
   ...DEFAULT_PROFILE,
   bypassList: [...DEFAULT_PROFILE.bypassList],
@@ -39,6 +43,10 @@ function profileSnapshot(): ProxyProfile {
   return { ...profile, bypassList: parseBypassList(bypassText.value) };
 }
 
+function copyRule(rule: RoutingRule): RoutingRule {
+  return { ...rule };
+}
+
 function snapshot(): ProxyState {
   const current = profileSnapshot();
   return {
@@ -47,6 +55,7 @@ function snapshot(): ProxyState {
     profiles: profiles.value.map((item) =>
       item.id === current.id ? current : copyProfile(item),
     ),
+    rules: rules.value.map(copyRule),
   };
 }
 
@@ -60,6 +69,7 @@ function applyToView(state: ProxyState) {
   enabled.value = state.enabled;
   activeProfileId.value = selected.id;
   profiles.value = nextProfiles;
+  rules.value = (state.rules ?? []).map(copyRule);
   Object.assign(profile, copyProfile(selected));
   bypassText.value = formatBypassList(selected.bypassList);
 }
@@ -147,12 +157,46 @@ async function deleteProfile() {
   const current = snapshot();
   const remaining = current.profiles.filter((item) => item.id !== activeProfileId.value);
   profiles.value = remaining;
+  rules.value = dropRulesForProfile(current.rules, activeProfileId.value);
   const next = remaining[0];
   if (!next) return;
   applySelected(next);
   if (enabled.value && !valid.value) enabled.value = false;
   await persist(snapshot());
   await checkControl();
+}
+
+async function addRule() {
+  rules.value = [
+    ...snapshot().rules,
+    { id: newId(), match: '', action: DIRECT_ACTION },
+  ];
+  await persist(snapshot());
+}
+
+async function updateRule(id: string, patch: Partial<Pick<RoutingRule, 'match' | 'action'>>) {
+  rules.value = snapshot().rules.map((rule) =>
+    rule.id === id ? { ...rule, ...patch } : rule,
+  );
+  await persist(snapshot());
+}
+
+async function deleteRule(id: string) {
+  rules.value = snapshot().rules.filter((rule) => rule.id !== id);
+  await persist(snapshot());
+}
+
+async function moveRule(id: string, delta: -1 | 1) {
+  const list = snapshot().rules;
+  const index = list.findIndex((rule) => rule.id === id);
+  const next = index + delta;
+  if (index < 0 || next < 0 || next >= list.length) return;
+  const copy = [...list];
+  const [item] = copy.splice(index, 1);
+  if (!item) return;
+  copy.splice(next, 0, item);
+  rules.value = copy;
+  await persist(snapshot());
 }
 
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -219,6 +263,7 @@ export function useProxyState() {
     enabled,
     activeProfileId,
     profiles,
+    rules,
     profile,
     bypassText,
     controlWarning,
@@ -234,6 +279,10 @@ export function useProxyState() {
     createProfile,
     duplicateProfile,
     deleteProfile,
+    addRule,
+    updateRule,
+    deleteRule,
+    moveRule,
     exportConfig,
     importConfig,
   };

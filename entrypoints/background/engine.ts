@@ -1,14 +1,23 @@
-import { activeProfile, isProfileValid, isBypassed, expandBypassForChromium } from '@/utils/proxy';
+import {
+  activeProfile,
+  isProfileValid,
+  isBypassed,
+  expandBypassForChromium,
+  resolveProxyDecision,
+  buildPacScript,
+  DIRECT_ACTION,
+} from '@/utils/proxy';
 import type { ProxyState, ProxyProfile } from '@/utils/proxy';
 
 // The proxy engine: two backends behind one contract. Chromium drives the
-// global `proxy.settings`; Firefox registers a per-request `proxy.onRequest`
-// listener, the only API that can authenticate SOCKS proxies.
+// global `proxy.settings` (fixed_servers, or a PAC when routing rules exist).
+// Firefox registers a per-request `proxy.onRequest` listener, the only API
+// that can authenticate SOCKS proxies.
 
 export async function applyState(s: ProxyState) {
   const profile = activeProfile(s);
   if (s.enabled && isProfileValid(profile)) {
-    await enableProxy(profile);
+    await applyEnabled(s);
     setBadge(true);
   } else {
     await disableProxy();
@@ -46,16 +55,21 @@ function toFirefoxProxyInfo(p: ProxyProfile): FirefoxProxyInfo {
   return info;
 }
 
+function firefoxDecision(url: string, s: ProxyState): FirefoxProxyResult {
+  const decision = resolveProxyDecision(url, s);
+  return decision === DIRECT_ACTION ? { type: 'direct' } : toFirefoxProxyInfo(decision);
+}
+
 // --- Engine contract --------------------------------------------------------
 
+// Apply a single profile with no rules. Used by the connection test so a
+// trial doesn't pick up the user's auto-switch list.
 export async function enableProxy(p: ProxyProfile) {
   if (import.meta.env.FIREFOX) {
     const proxyApi = browser.proxy as any;
     if (firefoxListener) proxyApi.onRequest.removeListener(firefoxListener);
     const info = toFirefoxProxyInfo(p);
     const bypass = p.bypassList;
-    // Chromium honours bypassList natively; Firefox doesn't, so route bypassed
-    // hosts directly here and everything else through the proxy.
     firefoxListener = ({ url }) =>
       isBypassed(url, bypass) ? { type: 'direct' } : info;
     proxyApi.onRequest.addListener(firefoxListener, { urls: ['<all_urls>'] });
@@ -72,6 +86,32 @@ export async function enableProxy(p: ProxyProfile) {
       },
     },
   });
+}
+
+async function applyEnabled(s: ProxyState) {
+  if (import.meta.env.FIREFOX) {
+    const proxyApi = browser.proxy as any;
+    if (firefoxListener) proxyApi.onRequest.removeListener(firefoxListener);
+    firefoxListener = ({ url }) => firefoxDecision(url, s);
+    proxyApi.onRequest.addListener(firefoxListener, { urls: ['<all_urls>'] });
+    return;
+  }
+
+  // Rules need per-URL routing; chrome.proxy.settings is process-wide, so
+  // compile the list + fallback profile into a PAC. No rules → keep the
+  // simpler fixed_servers path (native bypassList).
+  if (s.rules.length > 0) {
+    await chrome.proxy.settings.set({
+      scope: 'regular',
+      value: {
+        mode: 'pac_script',
+        pacScript: { data: buildPacScript(s), mandatory: true },
+      },
+    });
+    return;
+  }
+
+  await enableProxy(activeProfile(s));
 }
 
 export async function disableProxy() {

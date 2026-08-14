@@ -1,12 +1,13 @@
 import { DEFAULT_PROFILE, DEFAULT_STATE } from './types';
 import type { ProxyProfile, ProxyScheme, ProxyState } from './types';
+import { sanitizeRules } from './rules';
 
-// Serialize/parse a proxy profile for the Import/Export buttons. The exported
+// Serialize/parse proxy state for the Import/Export buttons. The exported
 // file is versioned so future model changes can migrate older files, and
-// parsing is defensive: anything missing or malformed falls back to the
-// DEFAULT_PROFILE value rather than throwing, mirroring loadState().
+// parsing is defensive: anything missing or malformed falls back to defaults
+// (including rules: [] for pre-v3 files) rather than throwing.
 
-export const EXPORT_VERSION = 2;
+export const EXPORT_VERSION = 3;
 
 export interface ExportFile {
   app: 'detour';
@@ -68,7 +69,12 @@ export function parseImport(text: string): ProxyState {
     throw new Error('No proxy config found in this file.');
   }
   if (raw.state && typeof raw.state === 'object') {
-    const state = raw.state as { enabled?: unknown; activeProfileId?: unknown; profiles?: unknown };
+    const state = raw.state as {
+      enabled?: unknown;
+      activeProfileId?: unknown;
+      profiles?: unknown;
+      rules?: unknown;
+    };
     if (Array.isArray(state.profiles) && state.profiles.length) {
       const profiles = state.profiles
         .filter((profile): profile is Record<string, unknown> => !!profile && typeof profile === 'object')
@@ -77,7 +83,13 @@ export function parseImport(text: string): ProxyState {
         const activeProfileId = profiles.some((profile) => profile.id === state.activeProfileId)
           ? state.activeProfileId as string
           : (profiles[0]?.id ?? DEFAULT_PROFILE.id);
-        return { enabled: state.enabled === true, activeProfileId, profiles };
+        const profileIds = new Set(profiles.map((profile) => profile.id));
+        return {
+          enabled: state.enabled === true,
+          activeProfileId,
+          profiles,
+          rules: sanitizeRules(state.rules, profileIds),
+        };
       }
     }
   }
