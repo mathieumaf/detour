@@ -6,6 +6,17 @@ import { enableProxy, applyState } from './engine';
 // Temporarily route through the given profile, fetch our exit IP, then restore
 // the previous proxy state. Lets the user verify a proxy before enabling it.
 export async function testProxy(profile: ProxyProfile): Promise<TestResult> {
+  const result = testQueue.then(() => runTest(profile));
+  testQueue = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
+
+let testQueue: Promise<void> = Promise.resolve();
+
+async function runTest(profile: ProxyProfile): Promise<TestResult> {
   if (!isProfileValid(profile)) {
     return { ok: false, error: 'Fill in host and port first.' };
   }
@@ -39,7 +50,8 @@ export async function testProxy(profile: ProxyProfile): Promise<TestResult> {
   } finally {
     ctx.testProfile = null;
     handledAuth.clear();
-    // Restore whatever was active before the test (ctx.state is set on startup).
-    await applyState(previous ?? DEFAULT_STATE);
+    // Restore the live state. It may have changed while fetch was in flight;
+    // most importantly, an explicit user Off must never be undone here.
+    await applyState(ctx.state ?? previous ?? DEFAULT_STATE);
   }
 }

@@ -37,6 +37,9 @@ function state(partial: Partial<ProxyState> = {}): ProxyState {
       { id: 'r2', match: '<private>', action: DIRECT_ACTION },
       { id: 'r3', match: '10.0.0.0/8', action: DIRECT_ACTION },
     ],
+    healthCheck: { ...DEFAULT_STATE.healthCheck },
+    healthStatus: { ...DEFAULT_STATE.healthStatus },
+    lastFailover: null,
     ...partial,
   };
 }
@@ -183,10 +186,19 @@ describe('PAC generation', () => {
 });
 
 describe('import/export', () => {
-  test('round-trips rules and accepts a v2 file with no rules', () => {
-    const s = state({ enabled: false });
+  test('round-trips rules and health settings, and accepts a v2 file', () => {
+    const s = state({
+      enabled: false,
+      healthCheck: {
+        enabled: true,
+        intervalSeconds: 120,
+        failureThreshold: 3,
+        fallbackProfileId: work.id,
+      },
+    });
     const parsed = parseImport(buildExport(s));
     expect(parsed.rules).toEqual(s.rules);
+    expect(parsed.healthCheck).toEqual(s.healthCheck);
     expect(parsed.profiles.map((p) => p.id)).toEqual([work.id, home.id]);
 
     const v2 = {
@@ -197,6 +209,7 @@ describe('import/export', () => {
     };
     const imported = parseImport(JSON.stringify(v2));
     expect(imported.rules).toEqual([]);
+    expect(imported.healthCheck).toEqual(DEFAULT_STATE.healthCheck);
     expect(imported.profiles[0]?.id).toBe(work.id);
   });
 

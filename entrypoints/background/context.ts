@@ -8,6 +8,9 @@ export const ctx = {
   // While a connectivity test runs, the profile being tried — so the auth path
   // uses its credentials instead of the saved ones.
   testProfile: null as ProxyProfile | null,
+  // Incremented synchronously when the user toggles Detour. Health writes
+  // capture this value so a concurrent user action always wins.
+  userToggleVersion: 0,
 };
 
 // Requests we've already answered an auth challenge for, so wrong credentials

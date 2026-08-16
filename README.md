@@ -38,12 +38,18 @@ out of scope (it would require a native Network Extension).
 - **Popup vs. settings** — the toolbar popup is a quick switch: connection
   status, the on/off toggle, a one-line summary of the configured proxy, and a
   connection test. The full configuration — server, credentials, bypass list,
-  routing rules, and import/export — lives on a dedicated settings page opened
-  from the popup's Settings button.
+  routing rules, health checks, and import/export — lives on a dedicated
+  settings page opened from the popup's Settings button.
+- **Health and failover** — optionally test the active profile on a configurable
+  interval while Detour is on. After the chosen number of consecutive failures,
+  Detour tests one configured fallback profile and switches to it if healthy;
+  otherwise it turns off and uses Direct. An explicit user Off always wins.
 - **Background service worker** applies the proxy when enabled, and releases it
   (falling back to system settings) when disabled. With no rules, Chromium uses
   `chrome.proxy.settings` in `fixed_servers` mode. With rules, it installs a
   generated PAC (`FindProxyForURL`). Firefox always uses `proxy.onRequest`.
+  Optional health checks are scheduled with the browser alarms API only while
+  the proxy is active.
 - **Proxy authentication** for HTTP/HTTPS is supplied through
   `webRequest.onAuthRequired` (using the MV3 `webRequestAuthProvider`
   permission).
@@ -54,9 +60,9 @@ out of scope (it would require a native Network Extension).
   bare host matches itself. Chromium consumes the list natively (with `<private>`
   expanded to its ranges); Firefox applies it per-request in the
   `proxy.onRequest` listener.
-- **Import / Export** — the settings page saves all proxy profiles and routing
-  rules (including passwords) to a JSON file and loads them back, for backup or
-  moving between machines.
+- **Import / Export** — the settings page saves all proxy profiles, routing
+  rules, and health settings (including passwords) to a JSON file and loads
+  them back, for backup or moving between machines.
 - **State** lives in `chrome.storage.local` as the single source of truth shared
   between the popup, the settings page, and the background worker. The popup and
   settings page subscribe to storage changes, so an edit in one is reflected in
@@ -80,7 +86,7 @@ bun run dev:firefox  # launches Firefox with the extension loaded
 bun run build        # production build → .output/chrome-mv3
 bun run build:firefox
 bun run compile      # type-check
-bun test             # unit tests (rule matching + PAC)
+bun test             # unit tests (routing, PAC, health/failover)
 ```
 
 Load an unpacked Chromium build from `.output/chrome-mv3` via

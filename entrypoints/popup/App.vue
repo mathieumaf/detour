@@ -8,6 +8,7 @@ const {
   activeProfileId,
   profiles,
   profile,
+  lastFailover,
   valid,
   controlWarning,
   toggle,
@@ -24,6 +25,12 @@ const summary = computed(() =>
     ? `${profile.scheme.toUpperCase()} · ${profile.host}:${profile.port}`
     : 'Not configured',
 );
+
+const failoverStatus = computed(() => {
+  const event = lastFailover.value;
+  if (!event || Date.now() - event.at > 10 * 60 * 1000) return '';
+  return `Fallback: ${event.from} → ${event.to}`;
+});
 
 function openOptions() {
   chrome.runtime.openOptionsPage();
@@ -58,6 +65,7 @@ function onProfileChange(event: Event) {
     <p class="status" :class="{ active: enabled }">
       {{ enabled ? 'Proxy active' : 'Direct connection' }}
     </p>
+    <p v-if="failoverStatus" class="failover-status">{{ failoverStatus }}</p>
 
     <div class="profile-row">
       <select
@@ -171,6 +179,12 @@ function onProfileChange(event: Event) {
 
 .status.active {
   color: var(--accent);
+}
+
+.failover-status {
+  margin: -8px 0 12px;
+  font-size: 12px;
+  color: var(--warn);
 }
 
 .profile-row {
