@@ -1,6 +1,7 @@
 import {
   HEALTH_ALARM,
   healthAlarmPeriodMinutes,
+  loadState,
   runHealthCheck,
   saveState,
   type ProxyState,
@@ -22,9 +23,9 @@ export async function syncHealthAlarm(state: ProxyState): Promise<void> {
   chrome.alarms.create(HEALTH_ALARM, { periodInMinutes });
 }
 
-export function registerHealthAlarm(): void {
+export function registerHealthAlarm(ready: Promise<unknown>): void {
   chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === HEALTH_ALARM) void checkHealth();
+    if (alarm.name === HEALTH_ALARM) void ready.then(checkHealth);
   });
 }
 
@@ -36,9 +37,15 @@ async function checkHealth(): Promise<void> {
   try {
     const next = await runHealthCheck(initial, {
       probe: testProxy,
-      getCurrentState: () => ctx.state,
+      // Re-read the persisted state after each asynchronous probe. The storage
+      // listener also updates ctx synchronously, covering an Off that races the
+      // final read.
+      getCurrentState: loadState,
     });
     if (!next) return;
+
+    const persisted = await loadState();
+    if (next.enabled && (!ctx.state?.enabled || !persisted.enabled)) return;
 
     // Update the in-memory source of truth before storage listeners run. The
     // storage change then follows the same applyState path as a manual change.

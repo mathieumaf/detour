@@ -119,7 +119,7 @@ function sameCheckedProfile(state: ProxyState, profileId: string): boolean {
 
 export interface HealthCheckDependencies {
   probe: (profile: ProxyProfile) => Promise<TestResult>;
-  getCurrentState: () => ProxyState | null;
+  getCurrentState: () => ProxyState | null | Promise<ProxyState | null>;
   now?: () => number;
 }
 
@@ -134,7 +134,7 @@ export async function runHealthCheck(
   const checkedProfile = activeProfile(initialState);
   if (!isProfileValid(checkedProfile)) return null;
   const result = await dependencies.probe(checkedProfile);
-  const current = dependencies.getCurrentState();
+  const current = await dependencies.getCurrentState();
 
   // State may change while fetch is in flight. In particular, an explicit Off
   // must win and must never be overwritten by a health result.
@@ -162,7 +162,7 @@ export async function runHealthCheck(
   const fallback = fallbackProfile(current, checkedProfile.id);
   if (fallback) {
     const fallbackResult = await dependencies.probe(fallback);
-    const latest = dependencies.getCurrentState();
+    const latest = await dependencies.getCurrentState();
     if (!latest || !sameCheckedProfile(latest, checkedProfile.id)) return null;
     if (fallbackResult.ok) {
       return {
@@ -179,7 +179,7 @@ export async function runHealthCheck(
     }
   }
 
-  const latest = dependencies.getCurrentState();
+  const latest = await dependencies.getCurrentState();
   if (!latest || !sameCheckedProfile(latest, checkedProfile.id)) return null;
   return {
     ...latest,
