@@ -3,6 +3,7 @@ import {
   loadState,
   saveState,
   testProxy,
+  setProxyEnabled,
   authSupported,
   isProfileValid,
   parseBypassList,
@@ -274,8 +275,16 @@ async function importConfig(file: File): Promise<void> {
 
 async function toggle() {
   if (!enabled.value && !valid.value) return;
-  enabled.value = !enabled.value;
-  await save();
+  const previous = enabled.value;
+  enabled.value = !previous;
+  testResult.value = null;
+  clearHealthRuntime();
+  try {
+    await setProxyEnabled(enabled.value);
+  } catch (error) {
+    enabled.value = previous;
+    throw error;
+  }
 }
 
 async function checkControl() {

@@ -1,4 +1,4 @@
-import { loadState, STORAGE_KEY } from '@/utils/proxy';
+import { loadState, saveState, STORAGE_KEY } from '@/utils/proxy';
 import type { ProxyProfile, ProxyState } from '@/utils/proxy';
 import { ctx, handledAuth } from './context';
 import { applyState } from './engine';
@@ -47,6 +47,26 @@ function registerMessages(ready: Promise<unknown>) {
         .then(() => testProxy(msg.profile as ProxyProfile))
         .then(sendResponse);
       return true; // keep the channel open for the async response
+    }
+    if (msg?.type === 'set-proxy-enabled') {
+      // Increment before any await so an in-flight health check is cancelled
+      // synchronously. Writes then originate from this worker in call order.
+      const toggleVersion = ++ctx.userToggleVersion;
+      void ready
+        .then(async () => {
+          const current = await loadState();
+          if (toggleVersion !== ctx.userToggleVersion) return;
+          const next: ProxyState = {
+            ...current,
+            enabled: msg.enabled === true,
+            healthStatus: { profileId: '', consecutiveFailures: 0 },
+            lastFailover: null,
+          };
+          ctx.state = next;
+          await saveState(next);
+        })
+        .then(() => sendResponse());
+      return true;
     }
     return undefined;
   });

@@ -32,6 +32,7 @@ export function registerHealthAlarm(ready: Promise<unknown>): void {
 async function checkHealth(): Promise<void> {
   const initial = ctx.state;
   if (!initial || checkRunning) return;
+  const toggleVersion = ctx.userToggleVersion;
 
   checkRunning = true;
   try {
@@ -45,6 +46,7 @@ async function checkHealth(): Promise<void> {
     if (!next) return;
 
     const persisted = await loadState();
+    if (toggleVersion !== ctx.userToggleVersion) return;
     if (next.enabled && (!ctx.state?.enabled || !persisted.enabled)) return;
 
     // Update the in-memory source of truth before storage listeners run. The
