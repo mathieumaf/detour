@@ -114,8 +114,8 @@ never sent to us or anyone else. Detour is open source.
 
 ### Screenshot captions (English (US))
 
-1. Switch between saved proxy profiles directly from the toolbar, toggle the
-   active proxy, and test the connection.
+1. Switch profiles from the toolbar, test the connection, and see when Detour
+   automatically falls back to another profile or Direct.
 2. Configure automatic health checks and a fallback, plus host rules that send
    traffic through a chosen profile or Direct.
 3. HTTP, HTTPS, and SOCKS support, authentication, named profiles, auto-switch
