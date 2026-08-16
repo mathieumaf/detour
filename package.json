@@ -2,7 +2,7 @@
   "name": "detour",
   "description": "Simple proxy switcher — HTTP, HTTPS, SOCKS4/5 with authentication.",
   "private": true,
-  "version": "1.5.0",
+  "version": "1.6.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
