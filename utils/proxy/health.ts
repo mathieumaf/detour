@@ -12,7 +12,7 @@ import {
 import { isProfileValid } from './validation';
 
 export const HEALTH_ALARM = 'proxy-health-check';
-export const HEALTH_MIN_INTERVAL_SECONDS = 30;
+export const HEALTH_MIN_INTERVAL_SECONDS = 60;
 export const HEALTH_MAX_INTERVAL_SECONDS = 3600;
 export const HEALTH_MIN_FAILURE_THRESHOLD = 1;
 export const HEALTH_MAX_FAILURE_THRESHOLD = 10;
@@ -141,12 +141,7 @@ export async function runHealthCheck(
   if (!current || !sameCheckedProfile(current, checkedProfile.id)) return null;
 
   if (result.ok) {
-    if (
-      current.healthStatus.profileId !== checkedProfile.id ||
-      current.healthStatus.consecutiveFailures === 0
-    ) {
-      return null;
-    }
+    if (current.healthStatus.consecutiveFailures === 0) return null;
     return { ...current, healthStatus: resetStatus() };
   }
 

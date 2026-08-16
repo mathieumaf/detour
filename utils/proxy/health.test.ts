@@ -6,7 +6,11 @@ import {
   type ProxyState,
   type TestResult,
 } from './types';
-import { healthAlarmPeriodMinutes, runHealthCheck } from './health';
+import {
+  healthAlarmPeriodMinutes,
+  runHealthCheck,
+  sanitizeHealthCheck,
+} from './health';
 
 const office: ProxyProfile = {
   id: 'office',
@@ -51,7 +55,7 @@ describe('proxy health checks', () => {
   test('waits for the configured consecutive-failure threshold', async () => {
     let current = state();
     const dependencies = {
-      probe: async () => result(false),
+      probe: async (profile: ProxyProfile) => result(profile.id === backup.id),
       getCurrentState: () => current,
       now: () => 123,
     };
@@ -132,5 +136,26 @@ describe('proxy health checks', () => {
         state({ healthCheck: { ...state().healthCheck, enabled: false } }),
       ),
     ).toBeNull();
+  });
+
+  test('migrates missing or malformed settings to safe defaults', () => {
+    const ids = new Set([office.id, backup.id]);
+    expect(sanitizeHealthCheck(undefined, ids)).toEqual(DEFAULT_STATE.healthCheck);
+    expect(
+      sanitizeHealthCheck(
+        {
+          enabled: true,
+          intervalSeconds: 10,
+          failureThreshold: 99,
+          fallbackProfileId: 'missing',
+        },
+        ids,
+      ),
+    ).toEqual({
+      enabled: true,
+      intervalSeconds: 60,
+      failureThreshold: 2,
+      fallbackProfileId: DIRECT_ACTION,
+    });
   });
 });
