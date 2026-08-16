@@ -7,6 +7,7 @@ import BypassList from '@/components/BypassList.vue';
 import RuleList from '@/components/RuleList.vue';
 import ConnectionTest from '@/components/ConnectionTest.vue';
 import ImportExport from '@/components/ImportExport.vue';
+import HealthCheck from '@/components/HealthCheck.vue';
 
 const { enabled, controlWarning, load } = useProxyState();
 
@@ -36,6 +37,11 @@ onMounted(load);
     <section class="card">
       <h2>Bypass list</h2>
       <BypassList />
+    </section>
+
+    <section class="card">
+      <h2>Health and failover</h2>
+      <HealthCheck />
     </section>
 
     <section class="card">

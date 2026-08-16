@@ -4,6 +4,7 @@ import { ctx, handledAuth } from './context';
 import { applyState } from './engine';
 import { registerAuthHandler } from './auth';
 import { testProxy } from './test';
+import { registerHealthAlarm, syncHealthAlarm } from './health';
 
 export default defineBackground(() => {
   void init();
@@ -12,6 +13,8 @@ export default defineBackground(() => {
 async function init() {
   ctx.state = await loadState();
   await applyState(ctx.state);
+  await syncHealthAlarm(ctx.state);
+  registerHealthAlarm();
 
   // React to changes coming from the popup.
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -19,7 +22,7 @@ async function init() {
     void loadState().then((next) => {
       ctx.state = next;
       handledAuth.clear();
-      return applyState(next);
+      return Promise.all([applyState(next), syncHealthAlarm(next)]);
     });
   });
 

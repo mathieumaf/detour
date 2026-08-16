@@ -1,6 +1,11 @@
 import { STORAGE_KEY, DEFAULT_PROFILE, DEFAULT_STATE } from './types';
 import type { ProxyProfile, ProxyState } from './types';
 import { sanitizeRules } from './rules';
+import {
+  sanitizeFailoverEvent,
+  sanitizeHealthCheck,
+  sanitizeHealthStatus,
+} from './health';
 
 function sanitizeProfile(raw: Partial<ProxyProfile>, index: number): ProxyProfile {
   const port = Number(raw.port);
@@ -46,6 +51,10 @@ export async function loadState(): Promise<ProxyState> {
     profiles,
     // Missing rules (pre-1.5 state) become an empty list.
     rules: sanitizeRules(stored?.rules, profileIds),
+    // Missing health fields (pre-1.6 state) preserve the opt-in default: off.
+    healthCheck: sanitizeHealthCheck(stored?.healthCheck, profileIds),
+    healthStatus: sanitizeHealthStatus(stored?.healthStatus, profileIds),
+    lastFailover: sanitizeFailoverEvent(stored?.lastFailover),
   };
 }
 

@@ -1,13 +1,14 @@
 import { DEFAULT_PROFILE, DEFAULT_STATE } from './types';
 import type { ProxyProfile, ProxyScheme, ProxyState } from './types';
 import { sanitizeRules } from './rules';
+import { sanitizeHealthCheck } from './health';
 
 // Serialize/parse proxy state for the Import/Export buttons. The exported
 // file is versioned so future model changes can migrate older files, and
 // parsing is defensive: anything missing or malformed falls back to defaults
 // (including rules: [] for pre-v3 files) rather than throwing.
 
-export const EXPORT_VERSION = 3;
+export const EXPORT_VERSION = 4;
 
 export interface ExportFile {
   app: 'detour';
@@ -50,7 +51,11 @@ export function buildExport(state: ProxyState): string {
     app: 'detour',
     version: EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
-    state,
+    state: {
+      ...state,
+      healthStatus: { profileId: '', consecutiveFailures: 0 },
+      lastFailover: null,
+    },
   };
   return JSON.stringify(file, null, 2);
 }
@@ -74,6 +79,7 @@ export function parseImport(text: string): ProxyState {
       activeProfileId?: unknown;
       profiles?: unknown;
       rules?: unknown;
+      healthCheck?: unknown;
     };
     if (Array.isArray(state.profiles) && state.profiles.length) {
       const profiles = state.profiles
@@ -89,6 +95,9 @@ export function parseImport(text: string): ProxyState {
           activeProfileId,
           profiles,
           rules: sanitizeRules(state.rules, profileIds),
+          healthCheck: sanitizeHealthCheck(state.healthCheck, profileIds),
+          healthStatus: { profileId: '', consecutiveFailures: 0 },
+          lastFailover: null,
         };
       }
     }

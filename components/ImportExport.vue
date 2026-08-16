@@ -43,7 +43,9 @@ async function onFile(e: Event) {
       />
     </div>
     <p v-if="message" class="result" :class="messageOk ? 'ok' : 'fail'">{{ message }}</p>
-    <p class="note">Saves all profiles and rules to a JSON file, passwords included.</p>
+    <p class="note">
+      Saves all profiles, rules, and health settings to a JSON file, passwords included.
+    </p>
   </div>
 </template>
 

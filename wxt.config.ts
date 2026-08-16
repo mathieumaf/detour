@@ -15,6 +15,7 @@ export default defineConfig({
       permissions: [
         'proxy',
         'storage',
+        'alarms',
         'webRequest',
         // Chromium supplies proxy auth via webRequestAuthProvider; Firefox keeps
         // the classic blocking webRequest for onAuthRequired.

@@ -206,6 +206,12 @@ body {
   color: var(--accent);
 }
 
+.failover-result {
+  margin: -8px 0 12px;
+  font-size: 12px;
+  color: var(--warn);
+}
+
 .profile-row {
   display: flex;
   gap: 8px;
@@ -348,6 +354,26 @@ body {
 
 .row .f.port {
   flex: 0 0 84px;
+}
+
+.health-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.health-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  color: #ffffff;
+  background: var(--accent);
+  font-size: 11px;
 }
 
 .btn-row {

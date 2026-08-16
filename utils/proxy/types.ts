@@ -30,11 +30,33 @@ export interface RoutingRule {
   action: string;
 }
 
+export interface HealthCheckSettings {
+  enabled: boolean;
+  intervalSeconds: number;
+  failureThreshold: number;
+  // Profile id, or DIRECT_ACTION.
+  fallbackProfileId: string;
+}
+
+export interface FailoverEvent {
+  from: string;
+  to: string;
+  at: number;
+}
+
+export interface HealthCheckStatus {
+  profileId: string;
+  consecutiveFailures: number;
+}
+
 export interface ProxyState {
   enabled: boolean;
   activeProfileId: string;
   profiles: ProxyProfile[];
   rules: RoutingRule[];
+  healthCheck: HealthCheckSettings;
+  healthStatus: HealthCheckStatus;
+  lastFailover: FailoverEvent | null;
 }
 
 export interface TestResult {
@@ -45,6 +67,12 @@ export interface TestResult {
 }
 
 export const STORAGE_KEY = 'proxyState';
+export const DEFAULT_HEALTH_CHECK: HealthCheckSettings = {
+  enabled: false,
+  intervalSeconds: 60,
+  failureThreshold: 2,
+  fallbackProfileId: DIRECT_ACTION,
+};
 
 export const DEFAULT_PROFILE: ProxyProfile = {
   id: 'default',
@@ -62,6 +90,9 @@ export const DEFAULT_STATE: ProxyState = {
   activeProfileId: DEFAULT_PROFILE.id,
   profiles: [{ ...DEFAULT_PROFILE, bypassList: [...DEFAULT_PROFILE.bypassList] }],
   rules: [],
+  healthCheck: { ...DEFAULT_HEALTH_CHECK },
+  healthStatus: { profileId: '', consecutiveFailures: 0 },
+  lastFailover: null,
 };
 
 export function activeProfile(state: ProxyState): ProxyProfile {

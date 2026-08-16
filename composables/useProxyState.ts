@@ -10,9 +10,13 @@ import {
   buildExport,
   parseImport,
   DEFAULT_PROFILE,
+  DEFAULT_HEALTH_CHECK,
   DIRECT_ACTION,
   STORAGE_KEY,
   dropRulesForProfile,
+  sanitizeHealthCheck,
+  type FailoverEvent,
+  type HealthCheckSettings,
   type ProxyProfile,
   type ProxyState,
   type RoutingRule,
@@ -23,6 +27,9 @@ const enabled = ref(false);
 const activeProfileId = ref(DEFAULT_PROFILE.id);
 const profiles = ref<ProxyProfile[]>([]);
 const rules = ref<RoutingRule[]>([]);
+const healthCheck = reactive<HealthCheckSettings>({ ...DEFAULT_HEALTH_CHECK });
+const healthStatus = reactive({ profileId: '', consecutiveFailures: 0 });
+const lastFailover = ref<FailoverEvent | null>(null);
 const profile = reactive<ProxyProfile>({
   ...DEFAULT_PROFILE,
   bypassList: [...DEFAULT_PROFILE.bypassList],
@@ -56,6 +63,9 @@ function snapshot(): ProxyState {
       item.id === current.id ? current : copyProfile(item),
     ),
     rules: rules.value.map(copyRule),
+    healthCheck: { ...healthCheck },
+    healthStatus: { ...healthStatus },
+    lastFailover: lastFailover.value ? { ...lastFailover.value } : null,
   };
 }
 
@@ -70,6 +80,12 @@ function applyToView(state: ProxyState) {
   activeProfileId.value = selected.id;
   profiles.value = nextProfiles;
   rules.value = (state.rules ?? []).map(copyRule);
+  Object.assign(healthCheck, state.healthCheck ?? DEFAULT_HEALTH_CHECK);
+  Object.assign(healthStatus, state.healthStatus ?? {
+    profileId: '',
+    consecutiveFailures: 0,
+  });
+  lastFailover.value = state.lastFailover ? { ...state.lastFailover } : null;
   Object.assign(profile, copyProfile(selected));
   bypassText.value = formatBypassList(selected.bypassList);
 }
@@ -84,6 +100,11 @@ async function load() {
   await checkControl();
 }
 
+function clearHealthRuntime() {
+  Object.assign(healthStatus, { profileId: '', consecutiveFailures: 0 });
+  lastFailover.value = null;
+}
+
 async function save() {
   testResult.value = null;
   const next = profileSnapshot();
@@ -91,8 +112,16 @@ async function save() {
   profile.name = next.name;
   profile.bypassList = next.bypassList;
   if (enabled.value && !valid.value) enabled.value = false;
+  clearHealthRuntime();
   await persist(snapshot());
   await checkControl();
+}
+
+async function updateHealthCheck() {
+  const profileIds = new Set(snapshot().profiles.map((item) => item.id));
+  Object.assign(healthCheck, sanitizeHealthCheck(healthCheck, profileIds));
+  clearHealthRuntime();
+  await persist(snapshot());
 }
 
 function applySelected(next: ProxyProfile) {
@@ -120,6 +149,7 @@ async function selectProfile(id: string) {
   if (!next) return;
   applySelected(next);
   if (enabled.value && !valid.value) enabled.value = false;
+  clearHealthRuntime();
   await persist(snapshot());
   await checkControl();
 }
@@ -158,6 +188,9 @@ async function deleteProfile() {
   const remaining = current.profiles.filter((item) => item.id !== activeProfileId.value);
   profiles.value = remaining;
   rules.value = dropRulesForProfile(current.rules, activeProfileId.value);
+  if (healthCheck.fallbackProfileId === activeProfileId.value) {
+    healthCheck.fallbackProfileId = DIRECT_ACTION;
+  }
   const next = remaining[0];
   if (!next) return;
   applySelected(next);
@@ -264,6 +297,8 @@ export function useProxyState() {
     activeProfileId,
     profiles,
     rules,
+    healthCheck,
+    lastFailover,
     profile,
     bypassText,
     controlWarning,
@@ -273,6 +308,7 @@ export function useProxyState() {
     supportsAuth,
     load,
     save,
+    updateHealthCheck,
     runTest,
     toggle,
     selectProfile,
