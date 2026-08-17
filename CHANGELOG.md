@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/mathieumaf/detour/compare/detour-v1.5.0...detour-v1.6.0) (2026-08-16)
+
+
+### Features
+
+* **proxy:** add health check and automatic failover ([#52](https://github.com/mathieumaf/detour/issues/52)) ([49496bc](https://github.com/mathieumaf/detour/commit/49496bc6619298d6268703c3ade4ff785333b786))
+
 ## [1.5.0](https://github.com/mathieumaf/detour/compare/detour-v1.4.3...detour-v1.5.0) (2026-08-14)
 
 
