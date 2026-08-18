@@ -93,3 +93,7 @@ input:disabled {
 .note.warn {
   color: var(--warn);
 }
+
+.note a {
+  color: var(--accent);
+}

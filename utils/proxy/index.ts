@@ -9,3 +9,4 @@ export * from './storage';
 export * from './messaging';
 export * from './transfer';
 export * from './health';
+export * from './commands';
