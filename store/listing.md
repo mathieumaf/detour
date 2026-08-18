@@ -128,13 +128,17 @@ Privacy & Security / Other
 
 ## Permission justifications (for store review)
 
-Reviewers ask why each permission is needed. Reuse these verbatim.
+Reviewers ask why each permission is needed. Reuse these verbatim. CWS
+Privacy-tab paste text (including the accepted `alarms` justification) is in
+[permissions.md](permissions.md).
 
 - **proxy** — core feature: apply and release the proxy configuration.
 - **storage** — persist the user's proxy profiles, routing rules, and active
   selection and health-check settings locally between sessions.
-- **alarms** — schedule optional proxy health checks at the user's chosen
-  interval, only while the proxy is active.
+- **alarms** — Used to schedule periodic health checks of the active proxy.
+  When the user enables health checks, Detour uses chrome.alarms to re-test
+  the proxy on the interval they chose and, after repeated failures, switch
+  to one fallback profile or Direct.
 - **webRequest** — detect proxy authentication challenges (onAuthRequired).
 - **webRequestAuthProvider** (Chromium) / **webRequestBlocking** (Firefox) —
   supply the saved username/password in response to a proxy auth challenge.
