@@ -11,7 +11,7 @@ export default defineConfig({
     return {
       name: 'Detour',
       description:
-        'Simple proxy switcher — HTTP, HTTPS, SOCKS4/5 with authentication.',
+        'Switch HTTP, HTTPS, or SOCKS proxy profiles from your toolbar, with auto-switch rules, health checks, failover, auth, and bypass.',
       permissions: [
         'proxy',
         'storage',

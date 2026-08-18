@@ -1,6 +1,6 @@
 {
   "name": "detour",
-  "description": "Simple proxy switcher — HTTP, HTTPS, SOCKS4/5 with authentication.",
+  "description": "Switch HTTP, HTTPS, or SOCKS proxy profiles from your toolbar, with auto-switch rules, health checks, failover, auth, and bypass.",
   "private": true,
   "version": "1.6.0",
   "type": "module",
