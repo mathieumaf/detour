@@ -63,6 +63,10 @@ out of scope (it would require a native Network Extension).
 - **Import / Export** — the settings page saves all proxy profiles, routing
   rules, and health settings (including passwords) to a JSON file and loads
   them back, for backup or moving between machines.
+- **Keyboard shortcuts** — bind Toggle Detour and Next profile in the browser's
+  shortcut page (linked from Settings). They write the same `enabled` /
+  `activeProfileId` state as the popup and work while the popup is closed.
+  Cycling profiles does not turn Detour on if you turned it off.
 - **State** lives in `chrome.storage.local` as the single source of truth shared
   between the popup, the settings page, and the background worker. The popup and
   settings page subscribe to storage changes, so an edit in one is reflected in
@@ -86,7 +90,7 @@ bun run dev:firefox  # launches Firefox with the extension loaded
 bun run build        # production build → .output/chrome-mv3
 bun run build:firefox
 bun run compile      # type-check
-bun test             # unit tests (routing, PAC, health/failover)
+bun test             # unit tests (routing, PAC, health/failover, commands)
 ```
 
 Load an unpacked Chromium build from `.output/chrome-mv3` via

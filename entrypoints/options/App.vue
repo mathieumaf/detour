@@ -12,6 +12,23 @@ import HealthCheck from '@/components/HealthCheck.vue';
 const { enabled, controlWarning, load } = useProxyState();
 
 onMounted(load);
+
+// Chrome has no commands.openShortcutSettings; tabs.create can open the
+// chrome:// shortcuts page. Firefox 140+ (our min version) has the API.
+const shortcutSettingsHref = import.meta.env.FIREFOX
+  ? 'https://support.mozilla.org/kb/manage-extension-shortcuts-firefox'
+  : 'chrome://extensions/shortcuts';
+
+function openShortcutSettings() {
+  const commands = chrome.commands as typeof chrome.commands & {
+    openShortcutSettings?: () => Promise<void>;
+  };
+  if (typeof commands.openShortcutSettings === 'function') {
+    void commands.openShortcutSettings();
+    return;
+  }
+  void chrome.tabs.create({ url: shortcutSettingsHref });
+}
 </script>
 
 <template>
@@ -52,6 +69,16 @@ onMounted(load);
     <section class="card">
       <h2>Backup</h2>
       <ImportExport />
+    </section>
+
+    <section class="card">
+      <h2>Keyboard shortcuts</h2>
+      <p class="note">
+        Shortcuts are assigned in the browser.
+        <a :href="shortcutSettingsHref" @click.prevent="openShortcutSettings">
+          Open shortcut settings
+        </a>
+      </p>
     </section>
 
     <footer class="foot">

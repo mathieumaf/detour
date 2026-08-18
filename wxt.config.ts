@@ -23,6 +23,16 @@ export default defineConfig({
       ],
       host_permissions: ['<all_urls>'],
       action: { default_title: 'Detour' },
+      // No suggested_key: common chords collide across browsers. Users assign
+      // both commands on chrome://extensions/shortcuts (Firefox: about:addons).
+      commands: {
+        'toggle-detour': {
+          description: 'Toggle Detour on or off',
+        },
+        'next-profile': {
+          description: 'Switch to the next named profile',
+        },
+      },
       ...(firefox && {
         browser_specific_settings: {
           gecko: {

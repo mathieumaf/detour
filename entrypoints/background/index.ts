@@ -1,4 +1,10 @@
-import { loadState, saveState, STORAGE_KEY } from '@/utils/proxy';
+import {
+  applyCommand,
+  COMMAND_TOGGLE,
+  loadState,
+  saveState,
+  STORAGE_KEY,
+} from '@/utils/proxy';
 import type { ProxyProfile, ProxyState } from '@/utils/proxy';
 import { ctx, handledAuth } from './context';
 import { applyState } from './engine';
@@ -14,6 +20,7 @@ export default defineBackground(() => {
   registerStateChanges(ready);
   registerAuthHandler();
   registerMessages(ready);
+  registerCommands(ready);
 });
 
 async function init() {
@@ -69,5 +76,24 @@ function registerMessages(ready: Promise<unknown>) {
       return true;
     }
     return undefined;
+  });
+}
+
+function registerCommands(ready: Promise<unknown>) {
+  // Commands fire with the popup closed. Persist the same enabled /
+  // activeProfileId fields the popup writes; the storage listener re-applies
+  // the engine and badge.
+  chrome.commands.onCommand.addListener((command) => {
+    const toggleVersion =
+      command === COMMAND_TOGGLE ? ++ctx.userToggleVersion : ctx.userToggleVersion;
+    void ready.then(async () => {
+      const current = await loadState();
+      if (command === COMMAND_TOGGLE && toggleVersion !== ctx.userToggleVersion) return;
+      const next = applyCommand(command, current);
+      if (!next) return;
+      if (command === COMMAND_TOGGLE && toggleVersion !== ctx.userToggleVersion) return;
+      ctx.state = next;
+      await saveState(next);
+    });
   });
 }
