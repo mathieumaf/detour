@@ -2,6 +2,11 @@ import { DEFAULT_PROFILE, DEFAULT_STATE } from './types';
 import type { ProxyProfile, ProxyScheme, ProxyState } from './types';
 import { sanitizeRules } from './rules';
 import { sanitizeHealthCheck } from './health';
+import {
+  importSwitchyOmega,
+  isSwitchyOmegaExport,
+  type ImportResult,
+} from './switchyomega';
 
 // Serialize/parse proxy state for the Import/Export buttons. The exported
 // file is versioned so future model changes can migrate older files, and
@@ -60,19 +65,9 @@ export function buildExport(state: ProxyState): string {
   return JSON.stringify(file, null, 2);
 }
 
-// Parse the contents of an imported file into a state. Version 1 exports and
-// bare profiles remain accepted, and are imported as one active profile.
-export function parseImport(text: string): ProxyState {
-  let data: unknown;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    throw new Error('Not a valid JSON file.');
-  }
+// Parse a Detour export (v2+ state, v1 / bare profile) into proxyState.
+function parseDetourImport(data: object): ProxyState {
   const raw = data as { state?: unknown; profile?: unknown };
-  if (!raw || typeof raw !== 'object') {
-    throw new Error('No proxy config found in this file.');
-  }
   if (raw.state && typeof raw.state === 'object') {
     const state = raw.state as {
       enabled?: unknown;
@@ -113,4 +108,27 @@ export function parseImport(text: string): ProxyState {
     activeProfileId: imported.id,
     profiles: [imported],
   };
+}
+
+// Parse an imported file. Detour JSON (including v1 / bare profiles) keeps its
+// existing path. SwitchyOmega backup/options JSON is detected and mapped.
+export function parseImportedFile(text: string): ImportResult {
+  let data: unknown;
+  try {
+    data = JSON.parse(text.replace(/^\uFEFF/, ''));
+  } catch {
+    throw new Error('Not a valid JSON file.');
+  }
+  if (!data || typeof data !== 'object') {
+    throw new Error('No proxy config found in this file.');
+  }
+  const raw = data as Record<string, unknown>;
+  if (isSwitchyOmegaExport(raw)) return importSwitchyOmega(raw);
+  return { source: 'detour', skipped: [], state: parseDetourImport(raw) };
+}
+
+// Parse the contents of an imported file into a state. Version 1 exports and
+// bare profiles remain accepted, and are imported as one active profile.
+export function parseImport(text: string): ProxyState {
+  return parseImportedFile(text).state;
 }

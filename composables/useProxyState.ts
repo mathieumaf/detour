@@ -9,7 +9,7 @@ import {
   parseBypassList,
   formatBypassList,
   buildExport,
-  parseImport,
+  parseImportedFile,
   DEFAULT_PROFILE,
   DEFAULT_HEALTH_CHECK,
   DIRECT_ACTION,
@@ -18,6 +18,7 @@ import {
   sanitizeHealthCheck,
   type FailoverEvent,
   type HealthCheckSettings,
+  type ImportResult,
   type ProxyProfile,
   type ProxyState,
   type RoutingRule,
@@ -265,12 +266,13 @@ function exportConfig() {
   URL.revokeObjectURL(url);
 }
 
-async function importConfig(file: File): Promise<void> {
-  const imported = parseImport(await file.text());
-  applyToView(imported);
+async function importConfig(file: File): Promise<ImportResult> {
+  const imported = parseImportedFile(await file.text());
+  applyToView(imported.state);
   if (enabled.value && !valid.value) enabled.value = false;
   await persist(snapshot());
   await checkControl();
+  return imported;
 }
 
 async function toggle() {
