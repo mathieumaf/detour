@@ -9,7 +9,8 @@ into the dashboard. Character limits are noted per field — stay within them.
 ## Shared positioning
 
 **One-liner:** A simple, intuitive proxy switcher — save profiles, add
-auto-switch rules, check proxy health, and switch from your toolbar.
+auto-switch rules, check proxy health, import SwitchyOmega backups, and switch
+from your toolbar or keyboard.
 
 **Tone:** plain, honest, privacy-first. No hype, no "best ever", no emoji in the
 description body.
@@ -24,6 +25,12 @@ Detour — Proxy Switcher
 ### Summary / short description (max 132)
 Switch HTTP, HTTPS, or SOCKS proxy profiles from your toolbar, with auto-switch
 rules, health checks, failover, auth, and bypass.
+
+The CWS short summary and the package `description` in `package.json` /
+`wxt.config.ts` are the same 129-character string. It already names the 1.6.0
+pillars and sits 3 characters under the limit — there is not enough room to
+add shortcuts or SwitchyOmega import without dropping a pillar. Leave it; the
+detailed description and screenshots carry 1.7.0.
 
 ### Detailed description (max 16,000)
 Detour is a simple, intuitive proxy switcher. Save configurations as named
@@ -48,9 +55,15 @@ Features:
 - Optional health checks while the proxy is active. After repeated failures,
   Detour switches to one chosen fallback profile, or Direct if the fallback is
   unavailable.
+- Keyboard shortcuts: bind Toggle Detour and Next profile in the browser's
+  shortcut page (linked from Settings). They work while the popup is closed.
+  Cycling profiles does not turn Detour on if you turned it off.
 - Dedicated settings page to create, rename, duplicate, or delete profiles,
-  with import/export of all profiles, rules, and health settings to a JSON file
-  for backup or moving between machines.
+  with export of all profiles, rules, and health settings to a JSON file for
+  backup or moving between machines. Import accepts a Detour backup or a
+  SwitchyOmega options JSON file: named HTTP, HTTPS, and SOCKS profiles and
+  compatible host rules are mapped; unsupported rows (PAC, regex, per-protocol
+  proxies) are listed after import instead of dropped quietly.
 - An ON badge on the toolbar icon shows at a glance when the proxy is active.
 
 Privacy:
@@ -74,8 +87,8 @@ Detour — Proxy Switcher
 
 ### Summary (max 250)
 A simple, intuitive proxy switcher. Save and switch HTTP, HTTPS, or SOCKS
-profiles from your toolbar — with authentication (including SOCKS), auto-switch
-rules, proxy health checks and failover, a bypass list, and import/export. No
+profiles from your toolbar or keyboard — with authentication (including SOCKS),
+auto-switch rules, health checks, failover, bypass, and SwitchyOmega import. No
 data collection.
 
 ### Description
@@ -102,9 +115,15 @@ Features:
 - Optional health checks while the proxy is active. After repeated failures,
   Detour switches to one chosen fallback profile, or Direct if the fallback is
   unavailable.
+- Keyboard shortcuts: bind Toggle Detour and Next profile in the browser's
+  shortcut page (linked from Settings). They work while the popup is closed.
+  Cycling profiles does not turn Detour on if you turned it off.
 - Dedicated settings page to create, rename, duplicate, or delete profiles,
-  with import/export of all profiles, rules, and health settings to a JSON file
-  for backup or moving between machines.
+  with export of all profiles, rules, and health settings to a JSON file for
+  backup or moving between machines. Import accepts a Detour backup or a
+  SwitchyOmega options JSON file: named HTTP, HTTPS, and SOCKS profiles and
+  compatible host rules are mapped; unsupported rows (PAC, regex, per-protocol
+  proxies) are listed after import instead of dropped quietly.
 - An ON badge on the toolbar icon shows at a glance when the proxy is active.
 
 Privacy:
@@ -119,7 +138,8 @@ never sent to us or anyone else. Detour is open source.
 2. Configure automatic health checks and a fallback, plus host rules that send
    traffic through a chosen profile or Direct.
 3. HTTP, HTTPS, and SOCKS support, authentication, named profiles, auto-switch
-   rules, health checks and failover, bypass lists, and no data collection.
+   rules, health checks and failover, keyboard shortcuts, SwitchyOmega import,
+   bypass lists, and no data collection.
 
 ### Categories
 Privacy & Security / Other
