@@ -8,5 +8,6 @@ export * from './pac';
 export * from './storage';
 export * from './messaging';
 export * from './transfer';
+export * from './switchyomega';
 export * from './health';
 export * from './commands';

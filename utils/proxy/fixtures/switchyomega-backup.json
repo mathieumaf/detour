@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 2,
+  "-confirmDeletion": true,
+  "-downloadInterval": 1440,
+  "-enableQuickSwitch": false,
+  "-quickSwitchProfiles": [],
+  "-refreshOnProfileChange": true,
+  "-revertProxyChanges": true,
+  "-showExternalProfile": true,
+  "-showInspectMenu": true,
+  "-startupProfileName": "auto switch",
+  "-monitorWebRequests": true,
+  "+proxy": {
+    "profileType": "FixedProfile",
+    "name": "proxy",
+    "color": "#99ccee",
+    "revision": "173e8e6c16f",
+    "bypassList": [
+      { "conditionType": "BypassCondition", "pattern": "127.0.0.1" },
+      { "conditionType": "BypassCondition", "pattern": "[::1]" },
+      { "conditionType": "BypassCondition", "pattern": "localhost" },
+      { "conditionType": "BypassCondition", "pattern": "192.0.2.0/24" }
+    ],
+    "fallbackProxy": {
+      "scheme": "http",
+      "host": "proxy.example.com",
+      "port": 8080
+    },
+    "auth": {
+      "fallbackProxy": {
+        "username": "alice",
+        "password": "s3cret"
+      }
+    }
+  },
+  "+socks": {
+    "profileType": "FixedProfile",
+    "name": "socks",
+    "color": "#55bb55",
+    "revision": "173e8e6c170",
+    "bypassList": [
+      { "conditionType": "BypassCondition", "pattern": " " }
+    ],
+    "fallbackProxy": {
+      "scheme": "socks5",
+      "host": "127.0.0.1",
+      "port": 1080
+    }
+  },
+  "+auto switch": {
+    "profileType": "SwitchProfile",
+    "name": "auto switch",
+    "color": "#99dd99",
+    "revision": "173e8e6c171",
+    "defaultProfileName": "direct",
+    "rules": [
+      {
+        "condition": { "conditionType": "HostWildcardCondition", "pattern": "github.com" },
+        "profileName": "proxy"
+      },
+      {
+        "condition": { "conditionType": "HostWildcardCondition", "pattern": "*.internal.example.com" },
+        "profileName": "socks"
+      },
+      {
+        "condition": { "conditionType": "BypassCondition", "pattern": "<local>" },
+        "profileName": "direct"
+      },
+      {
+        "condition": { "conditionType": "BypassCondition", "pattern": "<private>" },
+        "profileName": "direct"
+      },
+      {
+        "condition": { "conditionType": "IpCondition", "ip": "10.0.0.0", "prefixLength": 8 },
+        "profileName": "direct"
+      },
+      {
+        "condition": { "conditionType": "UrlWildcardCondition", "pattern": "*://*.extracted.example/*" },
+        "profileName": "proxy"
+      },
+      {
+        "condition": { "conditionType": "HostWildcardCondition", "pattern": "*.google.com.*" },
+        "profileName": "proxy"
+      },
+      {
+        "condition": { "conditionType": "HostRegexCondition", "pattern": "foo\\.bar\\..*" },
+        "profileName": "proxy"
+      },
+      {
+        "condition": { "conditionType": "UrlRegexCondition", "pattern": "^https://secret/" },
+        "profileName": "socks"
+      },
+      {
+        "condition": { "conditionType": "KeywordCondition", "pattern": "login" },
+        "profileName": "proxy"
+      },
+      {
+        "condition": { "conditionType": "TimeCondition", "startHour": 9, "endHour": 17 },
+        "profileName": "proxy"
+      },
+      {
+        "condition": { "conditionType": "WeekdayCondition", "startDay": 1, "endDay": 5 },
+        "profileName": "proxy"
+      },
+      {
+        "condition": { "conditionType": "HostWildcardCondition", "pattern": "via-virtual.example" },
+        "profileName": "alias"
+      },
+      {
+        "condition": { "conditionType": "HostWildcardCondition", "pattern": "via-pac.example" },
+        "profileName": "pac"
+      }
+    ]
+  },
+  "+other switch": {
+    "profileType": "SwitchProfile",
+    "name": "other switch",
+    "color": "#ddaa55",
+    "revision": "173e8e6c174",
+    "defaultProfileName": "socks",
+    "rules": [
+      {
+        "condition": { "conditionType": "HostWildcardCondition", "pattern": "*.other.example" },
+        "profileName": "socks"
+      }
+    ]
+  },
+  "+alias": {
+    "profileType": "VirtualProfile",
+    "name": "alias",
+    "color": "#aaaaaa",
+    "revision": "173e8e6c175",
+    "defaultProfileName": "proxy"
+  },
+  "+pac": {
+    "profileType": "PacProfile",
+    "name": "pac",
+    "color": "#ff9900",
+    "revision": "173e8e6c172",
+    "pacScript": "function FindProxyForURL(url, host) { return \"DIRECT\"; }"
+  },
+  "+split": {
+    "profileType": "FixedProfile",
+    "name": "split",
+    "color": "#cc66cc",
+    "revision": "173e8e6c173",
+    "bypassList": [],
+    "proxyForHttp": {
+      "scheme": "http",
+      "host": "http-proxy.example",
+      "port": 8080
+    },
+    "proxyForHttps": {
+      "scheme": "http",
+      "host": "https-proxy.example",
+      "port": 8443
+    }
+  }
+}
