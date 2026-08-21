@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.0](https://github.com/mathieumaf/detour/compare/detour-v1.6.0...detour-v1.7.0) (2026-08-21)
+
+
+### Features
+
+* **proxy:** add keyboard shortcuts for toggle and profile switch ([#57](https://github.com/mathieumaf/detour/issues/57)) ([f45c00d](https://github.com/mathieumaf/detour/commit/f45c00d2e3f762ee631074980eea8fb4fcb65222))
+* **proxy:** import SwitchyOmega profiles and host rules ([#60](https://github.com/mathieumaf/detour/issues/60)) ([aff72cd](https://github.com/mathieumaf/detour/commit/aff72cdeb9cd107e051222930610f1a11856ae2a)), closes [#55](https://github.com/mathieumaf/detour/issues/55)
+
 ## [1.6.0](https://github.com/mathieumaf/detour/compare/detour-v1.5.0...detour-v1.6.0) (2026-08-16)
 
 
