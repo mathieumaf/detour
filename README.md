@@ -101,3 +101,9 @@ Load an unpacked Chromium build from `.output/chrome-mv3` via
 `chrome://extensions` (Developer mode → Load unpacked). For Firefox, load
 `.output/firefox-mv3/manifest.json` via `about:debugging` → This Firefox → Load
 Temporary Add-on.
+
+## License
+
+[MIT](LICENSE.md) © Mathieu Mafille
+
+Privacy policy: [PRIVACY.md](PRIVACY.md) — Detour collects no data.
