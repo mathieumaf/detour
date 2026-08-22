@@ -2,6 +2,7 @@
   "name": "detour",
   "description": "Switch HTTP, HTTPS, or SOCKS proxy profiles from your toolbar, with auto-switch rules, health checks, failover, auth, and bypass.",
   "private": true,
+  "license": "MIT",
   "version": "1.7.0",
   "type": "module",
   "scripts": {

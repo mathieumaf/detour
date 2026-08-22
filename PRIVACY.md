@@ -25,9 +25,13 @@ Questions or concerns: detour@mafille.me
 
 <!--
 Repo-only note (not part of the published policy):
-The repo is private, so the public URL used as the Chrome Web Store privacy
-policy is a public Gist holding the policy text above. Keep that text in sync
-when editing here: https://gist.github.com/mathieumaf/5f62915d442b39082544eb62c963da65
+This file is the canonical privacy policy. The public URL declared on the
+Chrome Web Store and AMO dashboards is:
+https://github.com/mathieumaf/detour/blob/main/PRIVACY.md
+
+A public Gist previously held this text because the repo was private:
+https://gist.github.com/mathieumaf/5f62915d442b39082544eb62c963da65
+It is kept as a pointer to the URL above. Do not edit the policy there.
 -->
 
-_Last updated: 2026-08-18_
+_Last updated: 2026-08-22_
