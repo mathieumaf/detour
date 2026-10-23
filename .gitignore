@@ -9,6 +9,9 @@ lerna-debug.log*
 
 node_modules
 .output
+test-results/
+playwright-report/
+blob-report/
 stats.html
 stats-*.json
 .wxt
