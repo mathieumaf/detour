@@ -1,20 +1,39 @@
 version: 2
 updates:
   # GitHub Actions used in workflows (e.g. checkout, setup-bun).
+  # `chore` is not a releasable type for release-please, so these bumps do not
+  # cut a release. Do not set `include: scope` here: Dependabot would append
+  # `(deps)` and the title would be the unparsable `chore(ci)(deps):`.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "chore(ci)"
     groups:
       github-actions:
         patterns: ["*"]
 
   # JavaScript dependencies (Bun — reads package.json / bun.lock).
+  #
+  # Production updates (`dependencies`, and `optionalDependencies` if any)
+  # are `fix(deps):`, which release-please turns into a patch. Development
+  # updates are `chore(deps-dev):`, which it ignores. `include: scope` is
+  # what adds `(deps)` vs `(deps-dev)`; the prefix itself must not contain
+  # a scope or Dependabot appends a second one.
+  #
+  # `deps:` is not used. For release-type `node`, release-please only
+  # releases feat, fix, perf, and revert. The `deps` type is not one of
+  # them unless `changelog-sections` replaces the whole default list.
   - package-ecosystem: "bun"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
     ignore:
       # vue-tsc 3.3.5 (latest) doesn't support TypeScript 6 yet — it loses the
       # global `chrome` types and breaks `bun run compile`. Hold at 5.x until a
@@ -22,7 +41,16 @@ updates:
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
     groups:
-      # One PR for all minor/patch bumps; majors stay separate for review.
-      js-dependencies:
+      # Minor/patch production bumps (shipped in the extension, e.g. vue).
+      # Majors stay ungrouped so each one is reviewed on its own.
+      # Kept separate from dev deps: a grouped PR is `fix(deps)` when any
+      # dependency in it is production, which would also release dev-only bumps.
+      js-production-dependencies:
+        dependency-type: "production"
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+      # Dev-only bumps (wxt, vue-tsc, types, vite, …) use chore(deps-dev).
+      js-development-dependencies:
+        dependency-type: "development"
         patterns: ["*"]
         update-types: ["minor", "patch"]
