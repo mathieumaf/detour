@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/mathieumaf/detour/compare/detour-v1.7.0...detour-v1.7.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* keep proxy routing and auth on cold background start ([#72](https://github.com/mathieumaf/detour/issues/72)) ([22ad96f](https://github.com/mathieumaf/detour/commit/22ad96f3769989c168b2439721338947aca30376))
+
 ## [1.7.0](https://github.com/mathieumaf/detour/compare/detour-v1.6.0...detour-v1.7.0) (2026-08-21)
 
 
