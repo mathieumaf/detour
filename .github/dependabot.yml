@@ -40,6 +40,15 @@ updates:
       # TS6-compatible vue-tsc ships, then drop this ignore.
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
+      # package.json overrides (and publish.yml's "Overlay publish-browser-extension
+      # 6.1.1" step, for republishing older tags) pin this to 6.1.1. The lockfile
+      # therefore stays on 6.1.1 even though the devDependency range is ^6.2.0.
+      # Dependabot still tries to install 6.2.0, Bun changes no files, and the bun
+      # job dies with FileUpdater::NoChangeError. Drop this ignore when that exact
+      # pin is removed. 6.0.0 omitted the AMO zip filename (pbe #91, fixed in
+      # 6.1.0); 6.2.0 does not revert that, but it is not what publish runs and
+      # has not been retested against AMO.
+      - dependency-name: "publish-browser-extension"
     groups:
       # Minor/patch production bumps (shipped in the extension, e.g. vue).
       # Majors stay ungrouped so each one is reviewed on its own.
