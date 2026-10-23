@@ -95,12 +95,51 @@ bun run build        # production build → .output/chrome-mv3
 bun run build:firefox
 bun run compile      # type-check
 bun test             # unit tests (routing, PAC, health/failover, commands, SwitchyOmega import)
+bun run test:e2e     # build, then Playwright e2e against the Chromium extension
 ```
 
 Load an unpacked Chromium build from `.output/chrome-mv3` via
 `chrome://extensions` (Developer mode → Load unpacked). For Firefox, load
 `.output/firefox-mv3/manifest.json` via `about:debugging` → This Firefox → Load
 Temporary Add-on.
+
+### End-to-end tests
+
+`bun run test:e2e` builds the Chromium extension and runs the Playwright suite
+in `e2e/`. Install Playwright's Chromium once (`bunx playwright install chromium`).
+The harness starts a loopback target plus an HTTP proxy, an authenticated HTTP
+proxy, and a SOCKS5 proxy, then loads `.output/chrome-mv3` and checks real
+navigations. The test hostnames in `e2e/hosts.ts` resolve to 127.0.0.1 inside
+the browser. The suite does not call the network.
+
+It checks that an enabled profile (including the popup toggle) sends traffic
+through the proxy, direct mode does not, a routing rule proxies the matched
+host while a Direct rule stays direct, the bypass list skips the proxy, stored
+HTTP credentials authenticate with no prompt, SOCKS5 tunnels, and a browser
+restart still applies the saved profile and password.
+
+CI runs that same command headless in the **End-to-end (Chromium)** job on
+every push and pull request. The existing type-check job is unchanged. A cold
+cache spends most of the job downloading Chromium; the tests themselves are a
+handful of local page loads.
+
+Firefox is not in this job. Playwright's Firefox build cannot load
+WebExtensions — upstream closed that as out of scope
+([microsoft/playwright#7297](https://github.com/microsoft/playwright/issues/7297)) —
+and Firefox has no `--load-extension` switch. That gap is real: Firefox applies
+proxies with `proxy.onRequest`, not PAC / `chrome.proxy.settings`. Unit tests
+cover the decision function; they do not register the listener in Firefox.
+
+The practical way to add it is a temporary add-on, not Playwright's Firefox
+channel. Build with `bun run build:firefox`, install `.output/firefox-mv3` via
+`installTemporaryAddon` (web-ext, or a remote-debugging client), and drive the
+browser with geckodriver or WebDriver BiDi. Temporary add-ons do not need an
+AMO signature and may use the `proxy` permission. Enterprise
+`ExtensionSettings` force-install is a worse fit: on release Firefox that path
+still requires a signed XPI. Revisit this if Playwright ships a supported
+Firefox extension API. A third-party helper such as `playwright-webextext`
+wraps the same temporary-install protocol, but it tracks Playwright internals
+and is not pinned here.
 
 ## License
 

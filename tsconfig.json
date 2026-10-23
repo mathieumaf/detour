@@ -1,4 +1,4 @@
 {
   "extends": "./.wxt/tsconfig.json",
-  "exclude": ["node_modules", ".output", "scripts", "**/*.test.ts"]
+  "exclude": ["node_modules", ".output", "scripts", "e2e", "**/*.test.ts"]
 }
