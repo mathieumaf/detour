@@ -5,6 +5,10 @@
   "license": "MIT",
   "version": "1.7.1",
   "type": "module",
+  "packageManager": "bun@1.4.4",
+  "engines": {
+    "node": ">=26"
+  },
   "scripts": {
     "dev": "wxt",
     "dev:firefox": "wxt -b firefox",
