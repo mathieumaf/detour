@@ -49,20 +49,26 @@ jobs:
           ref: ${{ inputs.tag }}
 
       # Checkout uses the tag so the build matches the release, but older tags
-      # (e.g. detour-v1.4.1) predate zip normalization. workflow_dispatch still
-      # runs *this* workflow file from the selected branch (usually main), so
-      # overlay the normalizer from github.sha. Future tags already contain it.
-      - name: Overlay zip normalizer from workflow revision
+      # (e.g. detour-v1.4.1) predate zip normalization and .nvmrc.
+      # workflow_dispatch still runs *this* workflow file from the selected
+      # branch (usually main), so overlay the normalizer and the Node version
+      # file from github.sha. Future tags already contain them. setup-node
+      # below reads .nvmrc from the workspace, including on those older tags.
+      - name: Overlay zip normalizer and Node version from workflow revision
         run: |
           mkdir -p scripts
           git fetch --depth 1 origin "${GITHUB_SHA}:refs/tmp/workflow-sha"
-          git checkout refs/tmp/workflow-sha -- scripts/normalize-zips.ts
+          git checkout refs/tmp/workflow-sha -- scripts/normalize-zips.ts .nvmrc
         env:
           GITHUB_SHA: ${{ github.sha }}
 
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
       - uses: oven-sh/setup-bun@v2.2.0
         with:
-          bun-version: latest
+          bun-version: "1.4.4"
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
