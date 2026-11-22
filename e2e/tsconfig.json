@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
+    "target": "ESNext",
+    "module": "Preserve",
     "moduleResolution": "Bundler",
-    "lib": ["ES2022", "DOM"],
-    "types": ["node", "chrome"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "types": ["bun", "chrome"],
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,

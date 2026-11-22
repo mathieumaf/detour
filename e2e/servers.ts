@@ -1,7 +1,7 @@
 // Loopback servers the browser actually talks to. The proxies do not forward:
 // each one answers with its own `via=` line, and the target answers `via=direct`.
-// A navigation's body is therefore proof of which path Chromium took. Everything
-// binds to 127.0.0.1.
+// A navigation's body is therefore proof of which path the browser took.
+// Everything binds to 127.0.0.1, so the suite never touches the network.
 
 import http from 'node:http';
 import net from 'node:net';
@@ -25,15 +25,21 @@ export interface AuthProxyServer extends CountingServer {
   setCredentials(username: string, password: string): void;
 }
 
-export interface Harness {
+export interface Servers {
+  // What a direct connection reaches.
   target: CountingServer;
+  // An open HTTP proxy.
   httpProxy: CountingServer;
+  // An HTTP proxy that answers 407 until it gets the right Basic credentials.
   authProxy: AuthProxyServer;
+  // An open SOCKS5 proxy.
   socks: CountingServer;
+  // A SOCKS5 proxy that requires username / password (RFC 1929).
+  socksAuth: CountingServer;
   close(): Promise<void>;
 }
 
-export async function startHarness(): Promise<Harness> {
+export async function startServers(): Promise<Servers> {
   const target = await startTarget();
   const httpProxy = await startHttpProxy({ label: 'http-proxy' });
   const authProxy = await startHttpProxy({
@@ -41,18 +47,26 @@ export async function startHarness(): Promise<Harness> {
     username: AUTH_USERNAME,
     password: AUTH_PASSWORD,
   });
-  const socks = await startSocksProxy();
-  const harness: Harness = {
+  const socks = await startSocksProxy({ label: 'socks' });
+  const socksAuth = await startSocksProxy({
+    label: 'socks-auth',
+    username: AUTH_USERNAME,
+    password: AUTH_PASSWORD,
+  });
+  const servers: Servers = {
     target,
     httpProxy,
     authProxy,
     socks,
+    socksAuth,
     close: async () => {
-      await Promise.all([target.close(), httpProxy.close(), authProxy.close(), socks.close()]);
+      await Promise.all(
+        [target, httpProxy, authProxy, socks, socksAuth].map((server) => server.close()),
+      );
     },
   };
-  await selfCheck(harness);
-  return harness;
+  await selfCheck(servers);
+  return servers;
 }
 
 function startTarget(): Promise<CountingServer> {
@@ -107,16 +121,23 @@ function startHttpProxy(options: {
   }));
 }
 
-function startSocksProxy(): Promise<CountingServer> {
+function startSocksProxy(options: {
+  label: 'socks' | 'socks-auth';
+  username?: string;
+  password?: string;
+}): Promise<CountingServer> {
   const requests: ObservedRequest[] = [];
   const sockets = new Set<net.Socket>();
+  const requiresAuth = options.username !== undefined;
   const server = net.createServer((socket) => {
     sockets.add(socket);
     socket.on('close', () => sockets.delete(socket));
     socket.on('error', () => undefined);
 
-    // greeting → CONNECT → the HTTP request Chromium sends through the tunnel.
-    let stage: 'greeting' | 'connect' | 'http' = 'greeting';
+    // greeting → (credentials) → CONNECT → the HTTP request the browser sends
+    // through the tunnel.
+    let stage: 'greeting' | 'credentials' | 'connect' | 'http' = 'greeting';
+    let authorized = false;
     let buffer = Buffer.alloc(0);
 
     socket.on('data', (chunk: Buffer) => {
@@ -124,10 +145,43 @@ function startSocksProxy(): Promise<CountingServer> {
       while (true) {
         if (stage === 'greeting') {
           if (buffer.length < 2) return;
-          const methods = buffer[1] ?? 0;
-          if (buffer.length < 2 + methods) return;
-          buffer = buffer.subarray(2 + methods);
-          socket.write(Buffer.from([0x05, 0x00]));
+          const count = buffer[1] ?? 0;
+          if (buffer.length < 2 + count) return;
+          const offered = [...buffer.subarray(2, 2 + count)];
+          buffer = buffer.subarray(2 + count);
+          if (!requiresAuth) {
+            socket.write(Buffer.from([0x05, 0x00]));
+            stage = 'connect';
+            continue;
+          }
+          if (!offered.includes(0x02)) {
+            // The client did not offer username / password: refuse.
+            requests.push({ url: 'SOCKS no credentials offered', authorized: false });
+            socket.end(Buffer.from([0x05, 0xff]));
+            return;
+          }
+          socket.write(Buffer.from([0x05, 0x02]));
+          stage = 'credentials';
+          continue;
+        }
+
+        if (stage === 'credentials') {
+          if (buffer.length < 2) return;
+          const userLength = buffer[1] ?? 0;
+          if (buffer.length < 2 + userLength + 1) return;
+          const passLength = buffer[2 + userLength] ?? 0;
+          const total = 2 + userLength + 1 + passLength;
+          if (buffer.length < total) return;
+          const username = buffer.subarray(2, 2 + userLength).toString('utf8');
+          const password = buffer.subarray(3 + userLength, total).toString('utf8');
+          buffer = buffer.subarray(total);
+          authorized = username === options.username && password === options.password;
+          if (!authorized) {
+            requests.push({ url: 'SOCKS wrong credentials', authorized: false });
+            socket.end(Buffer.from([0x01, 0x01]));
+            return;
+          }
+          socket.write(Buffer.from([0x01, 0x00]));
           stage = 'connect';
           continue;
         }
@@ -157,8 +211,8 @@ function startSocksProxy(): Promise<CountingServer> {
         const head = buffer.subarray(0, headerEnd).toString('utf8');
         const requestLine = head.split('\r\n')[0] ?? '';
         const path = requestLine.split(' ')[1] ?? requestLine;
-        requests.push({ url: path, authorized: false });
-        const body = Buffer.from(`via=socks\nurl=${path}\n`);
+        requests.push({ url: path, authorized });
+        const body = Buffer.from(`via=${options.label}\nurl=${path}\n`);
         const headers = Buffer.from(
           'HTTP/1.1 200 OK\r\n' +
             'Content-Type: text/plain; charset=utf-8\r\n' +
@@ -176,7 +230,9 @@ function startSocksProxy(): Promise<CountingServer> {
   return listenNet(server, sockets, requests);
 }
 
-async function selfCheck(harness: Harness): Promise<void> {
+// Each server is exercised once from Node before any browser starts, so a
+// failing test points at the extension and not at the test servers.
+async function selfCheck(harness: Servers): Promise<void> {
   const direct = await fetch(`http://127.0.0.1:${harness.target.port}/self-check`);
   const directBody = await direct.text();
   if (!direct.ok || !directBody.startsWith('via=direct')) {
@@ -203,6 +259,14 @@ async function selfCheck(harness: Harness): Promise<void> {
   const socksBody = await socksRoundTrip(harness.socks.port, '/self-socks');
   if (!socksBody.includes('via=socks')) {
     throw new Error(`SOCKS5 self-check failed: ${socksBody}`);
+  }
+
+  const socksAuthBody = await socksRoundTrip(harness.socksAuth.port, '/self-socks-auth', {
+    username: AUTH_USERNAME,
+    password: AUTH_PASSWORD,
+  });
+  if (!socksAuthBody.includes('via=socks-auth')) {
+    throw new Error(`authenticated SOCKS5 self-check failed: ${socksAuthBody}`);
   }
 }
 
@@ -238,11 +302,20 @@ function proxyGet(
   });
 }
 
-function socksRoundTrip(port: number, path: string): Promise<string> {
+function socksRoundTrip(
+  port: number,
+  path: string,
+  credentials?: { username: string; password: string },
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const socket = net.connect({ host: '127.0.0.1', port });
+    // 0 greeting, 1 CONNECT reply, 2 HTTP response, 3 credentials reply.
     let stage = 0;
     let buffer = Buffer.alloc(0);
+    const connect = () => {
+      stage = 1;
+      socket.write(Buffer.from([0x05, 0x01, 0x00, 0x01, 1, 2, 3, 4, 0, 80]));
+    };
     const timer = setTimeout(() => {
       socket.destroy();
       reject(new Error('SOCKS5 self-check timed out'));
@@ -254,19 +327,43 @@ function socksRoundTrip(port: number, path: string): Promise<string> {
     };
     socket.on('error', fail);
     socket.on('connect', () => {
-      socket.write(Buffer.from([0x05, 0x01, 0x00]));
+      socket.write(Buffer.from([0x05, 0x01, credentials ? 0x02 : 0x00]));
     });
     socket.on('data', (chunk: Buffer) => {
       buffer = Buffer.concat([buffer, chunk]);
       if (stage === 0) {
         if (buffer.length < 2) return;
-        if (buffer[0] !== 0x05 || buffer[1] !== 0x00) {
+        const method = credentials ? 0x02 : 0x00;
+        if (buffer[0] !== 0x05 || buffer[1] !== method) {
           fail(new Error(`SOCKS5 greeting rejected: ${buffer.subarray(0, 2).toString('hex')}`));
           return;
         }
         buffer = buffer.subarray(2);
-        stage = 1;
-        socket.write(Buffer.from([0x05, 0x01, 0x00, 0x01, 1, 2, 3, 4, 0, 80]));
+        if (credentials) {
+          stage = 3;
+          const username = Buffer.from(credentials.username);
+          const password = Buffer.from(credentials.password);
+          socket.write(
+            Buffer.concat([
+              Buffer.from([0x01, username.length]),
+              username,
+              Buffer.from([password.length]),
+              password,
+            ]),
+          );
+        } else {
+          connect();
+        }
+      }
+      if (stage === 3) {
+        if (buffer.length < 2) return;
+        if (buffer[1] !== 0x00) {
+          fail(new Error('SOCKS5 credentials rejected'));
+          return;
+        }
+        buffer = buffer.subarray(2);
+        connect();
+        return;
       }
       if (stage === 1) {
         if (buffer.length < 10) return;
@@ -279,6 +376,7 @@ function socksRoundTrip(port: number, path: string): Promise<string> {
         socket.write(
           `GET ${path} HTTP/1.1\r\nHost: socks.detour.test\r\nConnection: close\r\n\r\n`,
         );
+        return;
       }
       if (stage === 2 && buffer.includes('via=socks')) {
         clearTimeout(timer);
@@ -363,7 +461,8 @@ function closeServer(server: net.Server, sockets: Set<net.Socket>): Promise<void
   for (const socket of sockets) socket.destroy();
   return new Promise((resolve, reject) => {
     server.close((error) => {
-      if (error && (error as NodeJS.ErrnoException).code !== 'ERR_SERVER_NOT_RUNNING') reject(error);
+      if (error && (error as NodeJS.ErrnoException).code !== 'ERR_SERVER_NOT_RUNNING')
+        reject(error);
       else resolve();
     });
   });
