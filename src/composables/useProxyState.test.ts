@@ -153,6 +153,38 @@ describe('useProxyState', () => {
     expect(stored().profiles[0]).toMatchObject({ host: 'edited.example', port: 9000 });
   });
 
+  test('two saves that fail one after the other leave nothing behind', async () => {
+    const page = await openPage();
+
+    page.profile.host = 'first.example';
+    fake.writeError = new Error('storage is full');
+    const first = page.save();
+    page.profile.host = 'second.example';
+    fake.writeError = new Error('storage is full');
+    const second = page.save();
+    const outcomes = await Promise.allSettled([first, second]);
+    expect(outcomes.map((outcome) => outcome.status)).toEqual(['rejected', 'rejected']);
+
+    // Neither value reached storage, so saving the first one again must write.
+    page.profile.host = 'first.example';
+    await page.save();
+    expect(stored().profiles[0]?.host).toBe('first.example');
+  });
+
+  test('saves a change that undoes one made somewhere else', async () => {
+    const page = await openPage();
+
+    await chrome.storage.local.set({ [STORAGE_KEY]: { ...initial(), activeProfileId: 'backup' } });
+    fake.deliverChanges();
+    await settle();
+    expect(page.activeProfileId.value).toBe('backup');
+
+    // Back to the profile this page loaded with. Storage holds the other one,
+    // so this is a real change and has to be written.
+    await page.selectProfile('office');
+    expect(stored().activeProfileId).toBe('office');
+  });
+
   test('shows a change made somewhere else', async () => {
     const page = await openPage();
     await chrome.storage.local.set({ [STORAGE_KEY]: { ...initial(), activeProfileId: 'backup' } });

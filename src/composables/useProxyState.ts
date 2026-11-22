@@ -75,11 +75,15 @@ function snapshot(): ProxyState {
 // States are compared by fingerprint, because Chromium hands a stored object
 // back with its keys sorted and a plain JSON.stringify would never match.
 
-// The state storage holds, as far as this page knows: what it last loaded,
-// saved, or was told about.
-let lastStored = '';
+// The last state storage is known to have held: loaded, or reported.
+let confirmed = '';
 // Saves storage has not reported yet, oldest first.
 const unreportedSaves: string[] = [];
+
+// What storage holds once every pending save has landed.
+function expectedInStorage(): string {
+  return unreportedSaves.at(-1) ?? confirmed;
+}
 
 function fingerprint(value: unknown): string {
   return JSON.stringify(value, (_key, item: unknown) =>
@@ -115,9 +119,7 @@ async function persist(state: ProxyState) {
   const saved = fingerprint(state);
   // Storage reports nothing for a write that changes nothing. Recording one
   // would leave an entry that later swallows somebody else's change.
-  if (saved === lastStored) return;
-  const before = lastStored;
-  lastStored = saved;
+  if (saved === expectedInStorage()) return;
   unreportedSaves.push(saved);
   try {
     await saveState(state);
@@ -125,7 +127,6 @@ async function persist(state: ProxyState) {
     // The write did not happen, so no report is coming for it.
     const index = unreportedSaves.lastIndexOf(saved);
     if (index !== -1) unreportedSaves.splice(index, 1);
-    if (lastStored === saved) lastStored = before;
     throw error;
   }
 }
@@ -142,7 +143,7 @@ function isOwnSave(reported: string): boolean {
 async function load() {
   const state = await loadState();
   unreportedSaves.length = 0;
-  lastStored = fingerprint(state);
+  confirmed = fingerprint(state);
   applyToView(state);
   await checkControl();
 }
@@ -279,10 +280,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
   const next = changes[STORAGE_KEY].newValue as ProxyState | undefined;
   if (!next) return;
   const reported = fingerprint(next);
+  confirmed = reported;
   if (isOwnSave(reported)) return;
-  // Someone else changed the state. While saves of this page are still on
-  // their way, storage will end up holding the last of those, not this.
-  if (unreportedSaves.length === 0) lastStored = reported;
   applyToView(next);
   testResult.value = null;
   void checkControl();
