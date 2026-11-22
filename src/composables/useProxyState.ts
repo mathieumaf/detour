@@ -67,7 +67,11 @@ function snapshot(): ProxyState {
   };
 }
 
-let lastWritten = '';
+// States this page has saved and not yet seen reported back by storage.
+// Storage reports a write some time after it happens, so when two edits are
+// saved in a row, the report for the first arrives after the second. Applying
+// it would put the page back to the older state and undo the second edit.
+const unreportedSaves: string[] = [];
 
 function applyToView(state: ProxyState) {
   const nextProfiles = state.profiles.map(copyProfile);
@@ -92,8 +96,19 @@ function applyToView(state: ProxyState) {
 }
 
 async function persist(state: ProxyState) {
-  lastWritten = JSON.stringify(state);
+  const serialized = JSON.stringify(state);
+  // Saving the same state twice produces one report at most.
+  if (unreportedSaves.at(-1) !== serialized) unreportedSaves.push(serialized);
   await saveState(state);
+}
+
+// True when a storage change is this page's own save coming back. Reports
+// arrive in the order of the writes, so everything saved before it is done too.
+function isOwnSave(state: ProxyState): boolean {
+  const index = unreportedSaves.indexOf(JSON.stringify(state));
+  if (index === -1) return false;
+  unreportedSaves.splice(0, index + 1);
+  return true;
 }
 
 async function load() {
@@ -231,7 +246,7 @@ async function moveRule(id: string, delta: -1 | 1) {
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local' || !changes[STORAGE_KEY]) return;
   const next = changes[STORAGE_KEY].newValue as ProxyState | undefined;
-  if (!next || JSON.stringify(next) === lastWritten) return;
+  if (!next || isOwnSave(next)) return;
   applyToView(next);
   testResult.value = null;
   void checkControl();
