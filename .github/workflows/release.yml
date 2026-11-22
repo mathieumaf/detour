@@ -32,15 +32,18 @@ on:
         type: boolean
         default: false
 
-# release-please is not safe to run twice at once (two runs race to create the
-# same tag), and a half-finished release must never be cancelled. Queue instead.
+# One run at a time, in the order they were started. release-please is not
+# safe to run twice at once (two runs race to create the same tag), two runs
+# must not submit to a store together, and a half-finished release must never
+# be cancelled.
 #
-# Everything that publishes shares one queue, whether a push or a person
-# started it. Dry runs get their own: GitHub keeps a single pending run per
-# group, so a dry run in the same queue could push out a waiting release.
+# `queue: max` keeps every waiting run. Without it GitHub keeps a single
+# pending run per group, and a run started by hand could push out a waiting
+# release.
 concurrency:
-  group: ${{ inputs.dry_run && 'release-dry-run' || 'release' }}
+  group: release
   cancel-in-progress: false
+  queue: max
 
 permissions: {}
 
