@@ -1,0 +1,5 @@
+[test]
+# Applies when coverage is on (`bun run test`). Every source file must keep
+# at least 90% of its lines and 80% of its functions covered by the unit tests.
+coverageSkipTestFiles = true
+coverageThreshold = { lines = 0.9, functions = 0.8 }

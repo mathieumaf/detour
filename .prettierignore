@@ -1,0 +1,16 @@
+# Build output and generated files
+.output
+.wxt
+node_modules
+bun.lock
+CHANGELOG.md
+.release-please-manifest.json
+
+# Third-party data used as test input, kept byte for byte
+src/core/fixtures/*.json
+
+# Store copy and artwork: pasted into dashboards as written
+store
+
+# Legal text
+LICENSE.md

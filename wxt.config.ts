@@ -2,7 +2,24 @@ import { defineConfig } from 'wxt';
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
+  srcDir: 'src',
   modules: ['@wxt-dev/module-vue'],
+  zip: {
+    // Firefox Add-ons reviewers rebuild the extension from the sources zip.
+    // Ship what that takes and leave out what it does not: the store artwork,
+    // the test suites and their data, docs, and release tooling.
+    // scripts/verify-sources.ts rebuilds from the zip to prove it is enough.
+    excludeSources: [
+      'store/**',
+      'e2e/**',
+      'docs/**',
+      'scripts/**',
+      'src/core/fixtures/**',
+      '**/fake-*.ts',
+      'CHANGELOG.md',
+      'release-please-config.json',
+    ],
+  },
   // Keep both targets on MV3 so the popup/background share one manifest shape
   // and the `action` API exists on Firefox too.
   manifestVersion: 3,

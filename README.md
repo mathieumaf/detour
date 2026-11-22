@@ -1,148 +1,111 @@
 # Detour
 
-A simple, intuitive proxy switcher browser extension. Toggle a proxy on/off
-from the toolbar popup. Supports **HTTP, HTTPS, SOCKS4, and SOCKS5**, with
-authentication for HTTP/HTTPS proxies.
+A proxy switcher for Chrome and Firefox. Save your proxies as profiles, switch
+between them from the toolbar, and send chosen sites through a different proxy
+or straight to the network.
 
-Built with [WXT](https://wxt.dev) + Vue (MV3).
+[![CI](https://github.com/mathieumaf/detour/actions/workflows/ci.yml/badge.svg)](https://github.com/mathieumaf/detour/actions/workflows/ci.yml)
+
+![The Detour popup: a toggle, the active profile, and a connection test](store/chrome/screenshot-1-popup-1280x800.png)
 
 ## Install
 
-- **Chrome / Edge / Brave / Opera / Vivaldi / Arc** — [Chrome Web Store](https://chromewebstore.google.com/detail/detour/ajfhkoilhlahkkbmnbcfoolbfhpfdpjp)
-- **Firefox** — [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/detour-proxy/)
+- **Chrome, Edge, Brave, Opera, Vivaldi, Arc**: [Chrome Web Store](https://chromewebstore.google.com/detail/detour/ajfhkoilhlahkkbmnbcfoolbfhpfdpjp)
+- **Firefox** (140 or later): [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/detour-proxy/)
+
+## What it does
+
+- **Profiles.** Keep several HTTP, HTTPS, SOCKS4, or SOCKS5 proxies and pick the
+  active one from the popup.
+- **One-click toggle.** Turn the proxy on or off from the toolbar. The icon
+  shows an ON badge while it is active.
+- **Rules.** Send a host through a chosen profile, or directly, whatever the
+  active profile is. The first matching rule wins.
+- **Bypass list.** Per profile, list the hosts that skip the proxy.
+- **Authentication.** Detour answers the proxy's password prompt with the
+  credentials you saved.
+- **Connection test.** Check a proxy before you rely on it. The test reports the
+  exit IP and how long the request took.
+- **Health checks and failover.** Optionally re-test the active proxy on an
+  interval. After repeated failures Detour switches to a fallback profile, or
+  turns itself off if the fallback is down too.
+- **Keyboard shortcuts.** Bind a key to the toggle and to "next profile".
+- **Import and export.** Back up everything to a JSON file. Import also reads a
+  SwitchyOmega backup.
+
+The [user guide](docs/usage.md) covers each of these, including the pattern
+syntax that rules and bypass lists share.
 
 ## Browser support
 
-| Browser | Proxy | HTTP/HTTPS auth | SOCKS auth |
-| --- | --- | --- | --- |
-| Chrome / Edge / Brave / Opera / Vivaldi / Arc | ✅ | ✅ | ❌ (browser limitation) |
-| Firefox | ✅ | ✅ | ✅ |
-| Safari | — | — | — (no `proxy` API) |
+| Browser                                  | Proxy | HTTP / HTTPS auth | SOCKS auth |
+| ---------------------------------------- | ----- | ----------------- | ---------- |
+| Chrome, Edge, Brave, Opera, Vivaldi, Arc | yes   | yes               | no         |
+| Firefox                                  | yes   | yes               | yes        |
+| Safari                                   | no    | no                | no         |
 
-The whole Chromium family shares one build (`chrome.proxy.settings`). Firefox
-uses a separate engine (`proxy.onRequest`), which is the only API that can
-authenticate SOCKS proxies — so the full HTTP/HTTPS/SOCKS4/SOCKS5 + auth feature
-set is complete on Firefox. Safari's WebExtensions have no `proxy` API, so it's
-out of scope (it would require a native Network Extension).
+Chromium browsers cannot send a username and password to a SOCKS proxy. That is
+a browser limitation, so the settings page disables those fields there. Safari
+has no proxy API for extensions.
 
-## How it works
+## Privacy
 
-- **Profiles** — save several named proxy configurations and switch the active
-  one from Settings. The active profile is the fallback the popup toggle
-  applies when no routing rule matches.
-- **Rules** — an ordered list on the settings page. First match wins: send a
-  host through a chosen profile or Direct (`github.com`, `*.example.com`,
-  `<local>`, `<private>`, `10.0.0.0/8`). Unmatched hosts use the active
-  profile. Chromium compiles the list into a PAC script; Firefox evaluates it
-  per request. The popup stays a toggle + profile picker.
-- **Popup vs. settings** — the toolbar popup is a quick switch: connection
-  status, the on/off toggle, a one-line summary of the configured proxy, and a
-  connection test. The full configuration — server, credentials, bypass list,
-  routing rules, health checks, and import/export — lives on a dedicated
-  settings page opened from the popup's Settings button.
-- **Health and failover** — optionally test the active profile on a configurable
-  interval while Detour is on. After the chosen number of consecutive failures,
-  Detour tests one configured fallback profile and switches to it if healthy;
-  otherwise it turns off and uses Direct. An explicit user Off always wins.
-- **Background service worker** applies the proxy when enabled, and releases it
-  (falling back to system settings) when disabled. With no rules, Chromium uses
-  `chrome.proxy.settings` in `fixed_servers` mode. With rules, it installs a
-  generated PAC (`FindProxyForURL`). Firefox always uses `proxy.onRequest`.
-  Optional health checks are scheduled with the browser alarms API only while
-  the proxy is active.
-- **Proxy authentication** for HTTP/HTTPS is supplied through
-  `webRequest.onAuthRequired` (using the MV3 `webRequestAuthProvider`
-  permission).
-- **Bypass list** lets you list hosts that connect directly, skipping the
-  proxy. `<local>` covers localhost and dotless hostnames, `<private>` covers
-  loopback plus RFC 1918 / link-local / unique-local ranges (IPv4 and IPv6),
-  `10.0.0.0/8` matches a CIDR range, `*.example.com` matches subdomains, and a
-  bare host matches itself. Chromium consumes the list natively (with `<private>`
-  expanded to its ranges); Firefox applies it per-request in the
-  `proxy.onRequest` listener.
-- **Import / Export** — the settings page saves all proxy profiles, routing
-  rules, and health settings (including passwords) to a JSON file and loads
-  them back, for backup or moving between machines. Import also accepts a
-  SwitchyOmega backup/options JSON file: named HTTP/HTTPS/SOCKS profiles and
-  host / wildcard / `<local>` / `<private>` / CIDR auto-switch rules are
-  mapped; unsupported rows (regex, PAC, per-protocol proxies, extra switch
-  profiles) are listed after import instead of dropped quietly.
-- **Keyboard shortcuts** — bind Toggle Detour and Next profile in the browser's
-  shortcut page (linked from Settings). They write the same `enabled` /
-  `activeProfileId` state as the popup and work while the popup is closed.
-  Cycling profiles does not turn Detour on if you turned it off.
-- **State** lives in `chrome.storage.local` as the single source of truth shared
-  between the popup, the settings page, and the background worker. The popup and
-  settings page subscribe to storage changes, so an edit in one is reflected in
-  the other.
-- The toolbar icon shows an **ON** badge while the proxy is active.
+Detour collects nothing. Your profiles and passwords stay in the browser's
+local extension storage. The only requests Detour makes on its own are
+connection tests and health checks, which ask `api.ipify.org` for the exit IP
+through the proxy being tested. See [PRIVACY.md](PRIVACY.md).
 
-## Known limitation (Chromium only)
+## Develop
 
-Chromium browsers cannot authenticate **SOCKS** proxies — username/password are
-ignored for SOCKS4/SOCKS5 (a long-standing browser limitation, not an extension
-bug). On those browsers the UI disables the credential fields and shows a note
-when a SOCKS scheme is selected. **Firefox has no such limitation** — SOCKS auth
-works there.
-
-## Development
+You need [Bun](https://bun.sh) 1.4.5 and Node 26.
 
 ```sh
 bun install
-bun run dev          # launches Chrome with the extension loaded
-bun run dev:firefox  # launches Firefox with the extension loaded
-bun run build        # production build → .output/chrome-mv3
-bun run build:firefox
-bun run compile      # type-check
-bun test             # unit tests (routing, PAC, health/failover, commands, SwitchyOmega import)
-bun run test:e2e     # build, then Playwright e2e against the Chromium extension
+bun run dev            # Chrome with the extension loaded, reloading on change
+bun run dev:firefox    # the same in Firefox
 ```
 
-Load an unpacked Chromium build from `.output/chrome-mv3` via
-`chrome://extensions` (Developer mode → Load unpacked). For Firefox, load
-`.output/firefox-mv3/manifest.json` via `about:debugging` → This Firefox → Load
-Temporary Add-on.
+Before you open a pull request:
 
-### End-to-end tests
+```sh
+bun run check          # lint, formatting, types, unit tests with coverage
+bun run browsers       # once: download the Chrome and Firefox the e2e suite drives
+bun run test:e2e       # the end-to-end suite, on Chrome and then on Firefox
+```
 
-`bun run test:e2e` builds the Chromium extension and runs the Playwright suite
-in `e2e/`. Install Playwright's Chromium once (`bunx playwright install chromium`).
-The harness starts a loopback target plus an HTTP proxy, an authenticated HTTP
-proxy, and a SOCKS5 proxy, then loads `.output/chrome-mv3` and checks real
-navigations. The test hostnames in `e2e/hosts.ts` resolve to 127.0.0.1 inside
-the browser. The suite does not call the network.
+To load a build by hand, run `bun run build` and load `.output/chrome-mv3` from
+`chrome://extensions` (Developer mode, then "Load unpacked"). For Firefox, run
+`bun run build:firefox` and load `.output/firefox-mv3/manifest.json` from
+`about:debugging`.
 
-It checks that an enabled profile (including the popup toggle) sends traffic
-through the proxy, direct mode does not, a routing rule proxies the matched
-host while a Direct rule stays direct, the bypass list skips the proxy, stored
-HTTP credentials authenticate with no prompt, SOCKS5 tunnels, and a browser
-restart still applies the saved profile and password.
+## How the code is laid out
 
-CI runs that same command headless in the **End-to-end (Chromium)** job on
-every push and pull request. The existing type-check job is unchanged. A cold
-cache spends most of the job downloading Chromium; the tests themselves are a
-handful of local page loads.
+```
+src/
+  core/          The proxy model and all its logic. No browser APIs: plain
+                 TypeScript, covered by unit tests.
+  entrypoints/
+    background/  Applies the stored state to the browser. One engine with a
+                 Chromium backend and a Firefox backend.
+    popup/       The toolbar popup.
+    options/     The settings page.
+  components/    Vue components for the two pages.
+  composables/   The state the pages share.
+  utils/         Thin wrappers over chrome.storage and runtime messaging.
+e2e/             End-to-end tests that drive real Chrome and Firefox.
+scripts/         Store packaging and its checks.
+store/           Store listing copy and artwork.
+docs/            Guides, listed below.
+```
 
-Firefox is not in this job. Playwright's Firefox build cannot load
-WebExtensions — upstream closed that as out of scope
-([microsoft/playwright#7297](https://github.com/microsoft/playwright/issues/7297)) —
-and Firefox has no `--load-extension` switch. That gap is real: Firefox applies
-proxies with `proxy.onRequest`, not PAC / `chrome.proxy.settings`. Unit tests
-cover the decision function; they do not register the listener in Firefox.
+## Documentation
 
-The practical way to add it is a temporary add-on, not Playwright's Firefox
-channel. Build with `bun run build:firefox`, install `.output/firefox-mv3` via
-`installTemporaryAddon` (web-ext, or a remote-debugging client), and drive the
-browser with geckodriver or WebDriver BiDi. Temporary add-ons do not need an
-AMO signature and may use the `proxy` permission. Enterprise
-`ExtensionSettings` force-install is a worse fit: on release Firefox that path
-still requires a signed XPI. Revisit this if Playwright ships a supported
-Firefox extension API. A third-party helper such as `playwright-webextext`
-wraps the same temporary-install protocol, but it tracks Playwright internals
-and is not pinned here.
+- [User guide](docs/usage.md): profiles, rules, patterns, health checks, import.
+- [Architecture](docs/architecture.md): how the pieces fit, and how to add to them.
+- [Testing](docs/testing.md): what each test layer covers and how to run it.
+- [Releasing](docs/releasing.md): from a merged pull request to both stores.
+- [Contributing](CONTRIBUTING.md) and the [security policy](SECURITY.md).
 
 ## License
 
 [MIT](LICENSE.md) © Mathieu Mafille
-
-Privacy policy: [PRIVACY.md](PRIVACY.md) — Detour collects no data.

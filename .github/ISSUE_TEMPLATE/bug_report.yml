@@ -1,0 +1,52 @@
+name: Bug report
+description: Something does not work the way it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. If the problem could expose someone's traffic or
+        credentials, please use the [security policy](https://github.com/mathieumaf/detour/blob/main/SECURITY.md) instead of a public issue.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you saw instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: The proxy type (HTTP, HTTPS, SOCKS4, SOCKS5), whether it needs a password, and any rules or bypass entries involved. Leave out hosts and credentials.
+      placeholder: |
+        1. Create an HTTP profile with a password
+        2. Add a rule: example.com → Direct
+        3. Turn Detour on and open example.com
+    validations:
+      required: true
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options:
+        - Chrome
+        - Firefox
+        - Edge
+        - Brave
+        - Another Chromium browser
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: The browser version and the Detour version (shown on the browser's extensions page).
+      placeholder: Firefox 160, Detour 1.7.1
+    validations:
+      required: true
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
+      description: Errors from the extension's console, screenshots, or whether another proxy extension is installed.

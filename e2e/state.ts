@@ -1,43 +1,16 @@
-// Shape written to chrome.storage.local under `proxyState` — the same object
-// the popup and options page persist (see utils/proxy/types.ts). The background
-// sanitizes it on read, so these builders only need to stay compatible.
+// Builders for the value the extension keeps in chrome.storage.local. They
+// reuse the extension's own types, so a model change breaks the suite at
+// compile time instead of at run time.
 
-export const STORAGE_KEY = 'proxyState';
-export const DIRECT = 'direct';
+import { DEFAULT_HEALTH_CHECK, DIRECT_ACTION } from '../src/core/types';
+import type { ProxyProfile, ProxyState } from '../src/core/types';
 
-export interface E2EProfile {
-  id: string;
-  name: string;
-  scheme: 'http' | 'https' | 'socks4' | 'socks5';
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-  bypassList: string[];
-}
+export { DIRECT_ACTION, STORAGE_KEY } from '../src/core/types';
+export type { ProxyProfile, ProxyState } from '../src/core/types';
 
-export interface E2ERule {
-  id: string;
-  match: string;
-  action: string;
-}
-
-export interface E2EState {
-  enabled: boolean;
-  activeProfileId: string;
-  profiles: E2EProfile[];
-  rules: E2ERule[];
-  healthCheck: {
-    enabled: boolean;
-    intervalSeconds: number;
-    failureThreshold: number;
-    fallbackProfileId: string;
-  };
-  healthStatus: { profileId: string; consecutiveFailures: number };
-  lastFailover: null;
-}
-
-export function profile(partial: Partial<E2EProfile> & Pick<E2EProfile, 'host' | 'port'>): E2EProfile {
+export function profile(
+  partial: Partial<ProxyProfile> & Pick<ProxyProfile, 'host' | 'port'>,
+): ProxyProfile {
   return {
     id: 'default',
     name: 'Default profile',
@@ -49,28 +22,14 @@ export function profile(partial: Partial<E2EProfile> & Pick<E2EProfile, 'host' |
   };
 }
 
-export function state(partial: Partial<E2EState> & Pick<E2EState, 'profiles'>): E2EState {
-  const profiles = partial.profiles;
-  const first = profiles[0];
+export function state(partial: Partial<ProxyState> & Pick<ProxyState, 'profiles'>): ProxyState {
   return {
     enabled: false,
-    activeProfileId: first?.id ?? 'default',
+    activeProfileId: partial.profiles[0]?.id ?? 'default',
     rules: [],
-    healthCheck: {
-      enabled: false,
-      intervalSeconds: 60,
-      failureThreshold: 2,
-      fallbackProfileId: DIRECT,
-    },
+    healthCheck: { ...DEFAULT_HEALTH_CHECK, fallbackProfileId: DIRECT_ACTION },
     healthStatus: { profileId: '', consecutiveFailures: 0 },
     lastFailover: null,
     ...partial,
-    profiles,
   };
-}
-
-export function activeProfile(current: E2EState): E2EProfile {
-  const found = current.profiles.find((item) => item.id === current.activeProfileId) ?? current.profiles[0];
-  if (!found) throw new Error('e2e proxy state has no profiles');
-  return found;
 }

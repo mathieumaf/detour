@@ -19,6 +19,18 @@ Credentials stay on your device. Detour does **not** read, record, or transmit
 the contents of the pages you visit. It loads no remote code and includes no
 analytics or tracking.
 
+## The one request Detour makes itself
+
+When you press **Test connection**, and on each health check if you turned
+health checks on, Detour sends one request to `https://api.ipify.org` through
+the proxy being tested. The answer is the address that request came from, which
+is how Detour can show you the proxy's exit IP.
+
+That service sees an ordinary browser request arriving from the address your
+traffic leaves from at that moment, normally the proxy's. Detour puts none of
+your settings or credentials in the request, and shows you the answer without
+storing it.
+
 ## Contact
 
 Questions or concerns: detour@mafille.me
@@ -34,4 +46,4 @@ https://gist.github.com/mathieumaf/5f62915d442b39082544eb62c963da65
 It is kept as a pointer to the URL above. Do not edit the policy there.
 -->
 
-_Last updated: 2026-08-22_
+_Last updated: 2026-11-22_
