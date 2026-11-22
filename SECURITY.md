@@ -6,7 +6,10 @@ taken seriously.
 
 ## Reporting a vulnerability
 
-Write to **detour@mafille.me**. Please do not open a public issue.
+Use GitHub's private reporting form:
+**[Report a vulnerability](https://github.com/mathieumaf/detour/security/advisories/new)**.
+If you prefer email, write to **detour@mafille.me**. Either way, please do not
+open a public issue.
 
 Include the browser and Detour versions, what you observed, and the steps to
 reproduce it. A profile configuration that triggers the problem helps a lot.
