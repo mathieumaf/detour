@@ -145,12 +145,14 @@ leaves the user's own Firefox proxy settings in effect.
   request finishes (8 seconds at most). Routing rules are not applied during
   that time, and the tested profile's bypass list is. A user starts a
   connection test knowingly; a health check runs on its own every interval.
+  Tracked in [#85](https://github.com/mathieumaf/detour/issues/85).
 - **Passwords are stored in plain text**, in extension storage and in exported
   backups. See "Known and accepted" in the security policy.
 - **Two bypass implementations on Chromium.** Without rules, Chromium applies
   the bypass list itself. With rules, Detour's matcher does, inside the PAC
   script. They agree on the documented pattern forms, and are not guaranteed
   to agree on forms only Chromium understands, such as an entry with a port.
+  Tracked in [#86](https://github.com/mathieumaf/detour/issues/86).
 
 ## Assumptions this repository cannot verify
 
