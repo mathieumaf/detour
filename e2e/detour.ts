@@ -12,7 +12,7 @@ import { STORAGE_KEY, type ProxyState } from './state';
 
 export type BrowserName = 'chrome' | 'firefox';
 
-// `DETOUR_BROWSER=firefox bun run test:e2e` selects Firefox. Chrome is the default.
+// `bun run test:e2e:firefox` sets DETOUR_BROWSER=firefox. Chrome is the default.
 export const BROWSER: BrowserName = process.env.DETOUR_BROWSER === 'firefox' ? 'firefox' : 'chrome';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');

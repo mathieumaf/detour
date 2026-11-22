@@ -66,6 +66,7 @@ jobs:
           name: store-packages
           path: .output/*.zip
           if-no-files-found: error
+          overwrite: true
           retention-days: 14
 
   e2e:

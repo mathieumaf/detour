@@ -18,7 +18,6 @@ export const HOSTS = {
   auth: 'auth.detour.test',
   socks: 'socks.detour.test',
   cold: 'cold.detour.test',
-  settings: 'settings.detour.test',
 } as const;
 
 // Chromium: --host-resolver-rules.

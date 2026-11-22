@@ -65,7 +65,13 @@ interface ProxyState {
 Every read goes through `normalizeState` (`src/core/state.ts`). It accepts
 whatever is in storage and returns a complete, consistent state: it upgrades
 older shapes, backfills defaults, and drops anything that points at a profile
-that no longer exists. Code downstream never checks for a missing field.
+that no longer exists. Code that loads the state never checks for a missing
+field.
+
+A storage change event is the one place a state is used as it was written:
+the background and the pages take the reported value as is, and the background
+reloads it through `normalizeState` straight after. Every writer is this
+extension, so the value is already in the current shape.
 
 That function is also the migration path. When you add a field to `ProxyState`:
 

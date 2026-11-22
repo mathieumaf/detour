@@ -67,11 +67,27 @@ function snapshot(): ProxyState {
   };
 }
 
-// States this page has saved and not yet seen reported back by storage.
-// Storage reports a write some time after it happens, so when two edits are
-// saved in a row, the report for the first arrives after the second. Applying
-// it would put the page back to the older state and undo the second edit.
+// Storage reports a write some time after it happens. When two edits are saved
+// in a row, the report for the first arrives after the second; applying it
+// would put the page back to the older state and undo the second edit. So the
+// page remembers what it saved and recognises those reports as its own.
+//
+// States are compared by fingerprint, because Chromium hands a stored object
+// back with its keys sorted and a plain JSON.stringify would never match.
+
+// The state storage holds, as far as this page knows: what it last loaded,
+// saved, or was told about.
+let lastStored = '';
+// Saves storage has not reported yet, oldest first.
 const unreportedSaves: string[] = [];
+
+function fingerprint(value: unknown): string {
+  return JSON.stringify(value, (_key, item: unknown) =>
+    item && typeof item === 'object' && !Array.isArray(item)
+      ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+      : item,
+  );
+}
 
 function applyToView(state: ProxyState) {
   const nextProfiles = state.profiles.map(copyProfile);
@@ -96,23 +112,38 @@ function applyToView(state: ProxyState) {
 }
 
 async function persist(state: ProxyState) {
-  const serialized = JSON.stringify(state);
-  // Saving the same state twice produces one report at most.
-  if (unreportedSaves.at(-1) !== serialized) unreportedSaves.push(serialized);
-  await saveState(state);
+  const saved = fingerprint(state);
+  // Storage reports nothing for a write that changes nothing. Recording one
+  // would leave an entry that later swallows somebody else's change.
+  if (saved === lastStored) return;
+  const before = lastStored;
+  lastStored = saved;
+  unreportedSaves.push(saved);
+  try {
+    await saveState(state);
+  } catch (error) {
+    // The write did not happen, so no report is coming for it.
+    const index = unreportedSaves.lastIndexOf(saved);
+    if (index !== -1) unreportedSaves.splice(index, 1);
+    if (lastStored === saved) lastStored = before;
+    throw error;
+  }
 }
 
 // True when a storage change is this page's own save coming back. Reports
 // arrive in the order of the writes, so everything saved before it is done too.
-function isOwnSave(state: ProxyState): boolean {
-  const index = unreportedSaves.indexOf(JSON.stringify(state));
+function isOwnSave(reported: string): boolean {
+  const index = unreportedSaves.indexOf(reported);
   if (index === -1) return false;
   unreportedSaves.splice(0, index + 1);
   return true;
 }
 
 async function load() {
-  applyToView(await loadState());
+  const state = await loadState();
+  unreportedSaves.length = 0;
+  lastStored = fingerprint(state);
+  applyToView(state);
   await checkControl();
 }
 
@@ -246,7 +277,12 @@ async function moveRule(id: string, delta: -1 | 1) {
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local' || !changes[STORAGE_KEY]) return;
   const next = changes[STORAGE_KEY].newValue as ProxyState | undefined;
-  if (!next || isOwnSave(next)) return;
+  if (!next) return;
+  const reported = fingerprint(next);
+  if (isOwnSave(reported)) return;
+  // Someone else changed the state. While saves of this page are still on
+  // their way, storage will end up holding the last of those, not this.
+  if (unreportedSaves.length === 0) lastStored = reported;
   applyToView(next);
   testResult.value = null;
   void checkControl();

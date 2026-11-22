@@ -34,8 +34,11 @@ on:
 
 # release-please is not safe to run twice at once (two runs race to create the
 # same tag), and a half-finished release must never be cancelled. Queue instead.
+#
+# Runs started by hand queue separately. GitHub keeps one pending run per
+# group, so a dry run must not be able to push out a waiting release.
 concurrency:
-  group: release
+  group: release-${{ github.event_name }}
   cancel-in-progress: false
 
 permissions: {}
@@ -123,6 +126,9 @@ jobs:
           name: store-packages
           path: .output/*.zip
           if-no-files-found: error
+          # Re-running this job after a later step failed must not trip over
+          # the artifact its first attempt uploaded.
+          overwrite: true
 
       - name: Attach the packages to the GitHub release
         if: env.TAG != '' && env.DRY_RUN != 'true'

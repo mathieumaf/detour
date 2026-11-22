@@ -90,6 +90,69 @@ describe('useProxyState', () => {
     expect(stored().healthCheck).toEqual(expected);
   });
 
+  test('recognises its own save when storage reports it between two edits', async () => {
+    const page = await openPage();
+
+    page.healthCheck.enabled = true;
+    await page.updateHealthCheck();
+    page.healthCheck.failureThreshold = 4;
+    await page.updateHealthCheck();
+
+    // Only the first save has been reported when the next edit starts. The
+    // report must not put the threshold back to what it was.
+    fake.deliverChanges(1);
+    await settle();
+    expect(page.healthCheck.failureThreshold).toBe(4);
+
+    page.healthCheck.intervalSeconds = 300;
+    await page.updateHealthCheck();
+    expect(stored().healthCheck).toMatchObject({
+      enabled: true,
+      failureThreshold: 4,
+      intervalSeconds: 300,
+    });
+  });
+
+  test('a save that changes nothing does not hide a later change from elsewhere', async () => {
+    const page = await openPage();
+
+    // Leaving a field without changing it saves the same state again.
+    await page.save();
+    fake.deliverChanges();
+
+    // Detour is switched on and then off again from the popup.
+    await chrome.storage.local.set({ [STORAGE_KEY]: { ...initial(), enabled: true } });
+    fake.deliverChanges();
+    await settle();
+    expect(page.enabled.value).toBe(true);
+
+    await chrome.storage.local.set({ [STORAGE_KEY]: initial() });
+    fake.deliverChanges();
+    await settle();
+    expect(page.enabled.value).toBe(false);
+  });
+
+  test('a save that fails is not waited for', async () => {
+    const page = await openPage();
+    const edited = { ...initial(), profiles: [{ ...office, host: 'edited.example' }, backup] };
+
+    page.profile.host = 'edited.example';
+    fake.writeError = new Error('storage is full');
+    await expect(page.save()).rejects.toThrow('storage is full');
+
+    // The same state then arrives from another page. It is news, not an echo.
+    page.profile.host = 'office.example';
+    await chrome.storage.local.set({ [STORAGE_KEY]: edited });
+    fake.deliverChanges();
+    await settle();
+    expect(page.profile.host).toBe('edited.example');
+
+    // And the page can still save afterwards.
+    page.profile.port = 9000;
+    await page.save();
+    expect(stored().profiles[0]).toMatchObject({ host: 'edited.example', port: 9000 });
+  });
+
   test('shows a change made somewhere else', async () => {
     const page = await openPage();
     await chrome.storage.local.set({ [STORAGE_KEY]: { ...initial(), activeProfileId: 'backup' } });

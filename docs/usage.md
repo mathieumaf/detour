@@ -3,7 +3,7 @@
 Detour has two surfaces. The **popup** behind the toolbar icon is for the things
 you do often: turn the proxy on or off, pick a profile, test the connection. The
 **settings page**, opened from the popup, is where you configure everything.
-Settings save as you type and take effect immediately.
+Settings save when you leave a field and take effect immediately.
 
 ## Profiles
 

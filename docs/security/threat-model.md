@@ -104,8 +104,8 @@ service worker is stopped, so there is no window to cover.
 
 `resolveAuth` (`src/entrypoints/background/auth.ts`) answers a challenge only
 when `details.isProxy` is true, so a website's own login prompt never receives
-proxy credentials. It picks the profile the request is routed through, and
-cancels a second challenge for the same request so wrong credentials are not
+proxy credentials. It picks the profile the current configuration routes the
+request through, and cancels a second challenge for the same request so wrong credentials are not
 replayed. In Firefox, SOCKS credentials travel inside the `ProxyInfo` returned
 for that request.
 
@@ -146,6 +146,11 @@ leaves the user's own Firefox proxy settings in effect.
   that time, and the tested profile's bypass list is. A user starts a
   connection test knowingly; a health check runs on its own every interval.
   Tracked in [#85](https://github.com/mathieumaf/detour/issues/85).
+- **The challenger is not compared with the profile.** `resolveAuth` chooses
+  credentials from the current configuration and does not check that the proxy
+  asking is that profile's host and port. A request already in flight when the
+  user switches profile can be challenged by the previous proxy and answered
+  with the new profile's credentials.
 - **Passwords are stored in plain text**, in extension storage and in exported
   backups. See "Known and accepted" in the security policy.
 - **Two bypass implementations on Chromium.** Without rules, Chromium applies

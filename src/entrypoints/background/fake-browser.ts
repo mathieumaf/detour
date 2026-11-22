@@ -47,8 +47,11 @@ export interface FakeBrowser {
   sentMessages: unknown[];
   messageReply: unknown;
 
-  // With `deferChanges`, storage change events wait here until delivered.
-  deliverChanges(): void;
+  // With `deferChanges`, storage change events wait here until delivered:
+  // all of them, or only the oldest `count`.
+  deliverChanges(count?: number): void;
+  // Set to make the next chrome.storage.local.set reject, once.
+  writeError: Error | null;
 
   // Deliver events the way the browser would.
   sendMessage(message: unknown): Promise<unknown>;
@@ -65,8 +68,18 @@ export interface FakeBrowserOptions {
   deferChanges?: boolean;
 }
 
+// Storage hands back a copy, never the object that was written. Chromium also
+// returns it with its keys sorted, so the fake does too: code that compares
+// stored values by their JSON text has to survive that.
 function copy<T>(value: T): T {
-  return value === undefined ? value : (JSON.parse(JSON.stringify(value)) as T);
+  if (value === undefined) return value;
+  return JSON.parse(
+    JSON.stringify(value, (_key, item: unknown) =>
+      item && typeof item === 'object' && !Array.isArray(item)
+        ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+        : item,
+    ),
+  ) as T;
 }
 
 export function installFakeBrowser(options: FakeBrowserOptions = {}): FakeBrowser {
@@ -101,11 +114,12 @@ export function installFakeBrowser(options: FakeBrowserOptions = {}): FakeBrowse
     alarms: new Map(),
     badge: '',
     levelOfControl: 'controllable_by_this_extension',
+    writeError: null,
     sentMessages: [],
     messageReply: undefined,
 
-    deliverChanges() {
-      for (const deliver of deferredChanges.splice(0)) deliver();
+    deliverChanges(count = deferredChanges.length) {
+      for (const deliver of deferredChanges.splice(0, count)) deliver();
     },
     sendMessage(message) {
       return new Promise((resolve) => {
@@ -131,11 +145,20 @@ export function installFakeBrowser(options: FakeBrowserOptions = {}): FakeBrowse
           return key in stored ? { [key]: copy(stored[key]) } : {};
         },
         async set(items: Record<string, unknown>) {
+          if (fake.writeError) {
+            const error = fake.writeError;
+            fake.writeError = null;
+            throw error;
+          }
           const changes: Record<string, { oldValue: unknown; newValue: unknown }> = {};
           for (const [key, value] of Object.entries(items)) {
-            changes[key] = { oldValue: copy(stored[key]), newValue: copy(value) };
-            stored[key] = copy(value);
+            const next = copy(value);
+            // A write that changes nothing is not reported.
+            if (JSON.stringify(stored[key]) === JSON.stringify(next)) continue;
+            changes[key] = { oldValue: copy(stored[key]), newValue: copy(next) };
+            stored[key] = next;
           }
+          if (Object.keys(changes).length === 0) return;
           const deliver = () => {
             for (const listener of changeListeners) listener(changes, 'local');
           };
