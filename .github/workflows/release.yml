@@ -129,6 +129,8 @@ jobs:
         with:
           name: store-packages
           path: .output/*.zip
+          # .output is a hidden directory, which the action skips by default.
+          include-hidden-files: true
           if-no-files-found: error
           # Re-running this job after a later step failed must not trip over
           # the artifact its first attempt uploaded.

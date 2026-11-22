@@ -65,6 +65,8 @@ jobs:
         with:
           name: store-packages
           path: .output/*.zip
+          # .output is a hidden directory, which the action skips by default.
+          include-hidden-files: true
           if-no-files-found: error
           overwrite: true
           retention-days: 14
