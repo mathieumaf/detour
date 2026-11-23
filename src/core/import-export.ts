@@ -7,7 +7,8 @@ import { importSwitchyOmega, isSwitchyOmegaExport, type ImportResult } from './s
 // Serialize and parse proxy state for the Import / Export buttons. The exported
 // file is versioned so future model changes can migrate older files. Parsing is
 // defensive: anything missing or malformed falls back to a default instead of
-// throwing, and only a file with no proxy config at all is rejected.
+// throwing. A file is rejected only when it has no proxy config at all: no
+// profiles, and no proxy host.
 
 export const EXPORT_VERSION = 4;
 
@@ -33,6 +34,13 @@ function hasProfiles(state: unknown): state is Record<string, unknown> {
   return isRecord(state) && Array.isArray(state.profiles) && state.profiles.some(isRecord);
 }
 
+// A single profile has to name its server. `sanitizeProfile` fills in every
+// missing field, so without this check any object, even `{}`, would import as a
+// blank profile and replace the whole configuration.
+function isProfile(value: unknown): value is Record<string, unknown> {
+  return isRecord(value) && typeof value.host === 'string' && value.host.trim() !== '';
+}
+
 // A Detour export. v2+ files carry a full `state`; v1 files carry a single
 // `profile`, and a bare profile object is accepted the same way.
 function parseDetourImport(raw: Record<string, unknown>): ProxyState {
@@ -41,7 +49,7 @@ function parseDetourImport(raw: Record<string, unknown>): ProxyState {
   }
 
   const profile = raw.profile ?? raw;
-  if (!isRecord(profile)) {
+  if (!isProfile(profile)) {
     throw new Error('No proxy config found in this file.');
   }
   const imported = sanitizeProfile(profile, 0);
