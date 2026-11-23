@@ -108,4 +108,22 @@ describe('parseImportedFile', () => {
       expect(() => parseImportedFile(text)).toThrow('No proxy config found in this file.');
     }
   });
+
+  // Each of these used to replace the whole configuration with one blank profile.
+  test('rejects an object with no proxy config in it', () => {
+    const files = [
+      {},
+      { hello: 'world' },
+      { app: 'detour', state: { profiles: [] } },
+      { app: 'detour', version: 1, profile: {} },
+      { app: 'detour', version: 1, profile: { name: 'Work', port: 8080 } },
+      { host: '   ' },
+      { host: 42 },
+    ];
+    for (const file of files) {
+      expect(() => parseImportedFile(JSON.stringify(file))).toThrow(
+        'No proxy config found in this file.',
+      );
+    }
+  });
 });
