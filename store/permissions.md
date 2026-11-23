@@ -1,39 +1,56 @@
-# Chrome Web Store — permission justifications
+# Chrome Web Store — Privacy tab
 
-Paste these into the CWS Privacy tab when a new permission is added, or when
-CWS asks again on publish.
+The text on the Chrome Web Store dashboard's Privacy tab, field by field. It is
+what reviewers read, so keep it here and on the dashboard identical: edit this
+file first, then paste each field into the dashboard.
 
-- **`alarms`** is the justification already accepted on CWS for 1.6.0. Use it
-  verbatim.
-- The other permissions already live on the dashboard. The text below is
-  recovered from `listing.md` and `PRIVACY.md` so the next field is not a
-  surprise publish failure. Do not invent new claims; if a purpose changes,
-  update `listing.md`, `PRIVACY.md`, and this file together.
+A change on the Privacy tab is saved as a draft and goes to review with the next
+package. Click **Save draft**, never **Submit for review**: the release
+workflow submits the draft together with the new version.
 
-## alarms
+If a purpose changes, update `listing.md`, `PRIVACY.md`, and this file
+together. Firefox Add-ons asks for no justifications. Its data disclosure comes
+from the manifest's `data_collection_permissions`, which says Detour collects
+nothing, and its privacy policy field is covered in `listing.md`.
+
+## Single purpose description
+
+Detour is a proxy switcher: it routes the browser's traffic through proxy servers the user configures. The user saves servers (HTTP, HTTPS, SOCKS4, or SOCKS5) as named profiles with bypass lists and, for HTTP and HTTPS, optional credentials. The user picks the active profile from the toolbar, can send chosen hosts through a specific profile or directly, can test a profile's connection, and can turn on health checks that switch to a fallback profile or Direct when the active proxy stops responding.
+
+## Permission justifications
+
+### proxy
+
+Detour's core function is to route the browser's traffic through a user-configured proxy. The "proxy" permission is required to apply the proxy settings when the user turns it on and to clear them when the user turns it off.
+
+### storage
+
+Used to save the user's proxy profiles (scheme, host, port, optional credentials, and bypass list), routing rules, health-check settings and status, the active profile, and the on/off state in chrome.storage.local, so they persist between sessions and stay in sync between the popup, the settings page, and the background service worker. Saved credentials leave the device only to answer the proxy that asks for them; everything else stays on the device. None of it is sent to the developer.
+
+### alarms
 
 Used to schedule periodic health checks of the active proxy. When the user enables health checks, Detour uses chrome.alarms to re-test the proxy on the interval they chose and, after repeated failures, switch to one fallback profile or Direct.
 
-## proxy
+### webRequest
 
-core feature: apply and release the proxy configuration.
+Required to detect proxy authentication challenges (onAuthRequired) so Detour can supply the username and password the user entered for HTTP/HTTPS proxies. It is used only to answer proxy auth prompts; request contents are never read, stored, or transmitted.
 
-## storage
+### webRequestAuthProvider
 
-persist the user's proxy profiles, routing rules, and active selection and health-check settings locally between sessions.
+Required on Manifest V3 to asynchronously provide the proxy username and password in response to an authentication challenge. Without it, authenticated HTTP/HTTPS proxies could not be used.
 
-## webRequest
+### Host permission
 
-detect proxy authentication challenges (onAuthRequired).
+A proxy applies to every outgoing request, and proxy authentication challenges can occur for any destination. The host permission is needed so Detour can route all traffic through the proxy and answer auth prompts regardless of the site. Detour does not read, modify, collect, or transmit page content.
 
-## webRequestAuthProvider (Chromium) / webRequestBlocking (Firefox)
+## Data usage
 
-supply the saved username/password in response to a proxy auth challenge.
-
-## Host permission `<all_urls>`
-
-the proxy routes traffic for every site, and auth challenges can originate from any request, so access is not limited to a specific host.
-
-## Data collection
-
-none. (AMO data-collection disclosure: "No data collected".)
+- **Data collected:** none. Every category is left unticked.
+- **Certifications:** all three are ticked:
+  - I do not sell or transfer user data to third parties, apart from the
+    approved use cases
+  - I do not use or transfer user data for purposes that are unrelated to my
+    item's single purpose
+  - I do not use or transfer user data to determine creditworthiness or for
+    lending purposes
+- **Privacy policy URL:** https://github.com/mathieumaf/detour/blob/main/PRIVACY.md

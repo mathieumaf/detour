@@ -4,6 +4,10 @@ Single source of truth for the Chrome Web Store and Firefox Add-ons (AMO)
 listings. Keep both stores in sync by editing here first, then copy each field
 into the dashboard. Character limits are noted per field — stay within them.
 
+On the Chrome Web Store, the name and the summary come from the package
+(`wxt.config.ts`), so they change only with a release. Everything else,
+including the AMO name, is edited in the dashboards.
+
 ---
 
 ## Shared positioning
@@ -19,8 +23,8 @@ description body.
 
 ## Chrome Web Store
 
-### Name (max 75)
-Detour — Proxy Switcher
+### Name (from the package)
+Detour
 
 ### Summary / short description (max 132)
 Switch HTTP, HTTPS, or SOCKS proxy profiles from your toolbar, with auto-switch
@@ -76,14 +80,19 @@ password are ignored for SOCKS4/SOCKS5. This is a long-standing browser
 limitation, not a Detour bug; HTTP/HTTPS proxy authentication works normally.
 
 ### Category
-Tools / Productivity
+Privacy & Security
+
+### Links
+- Homepage URL: https://github.com/mathieumaf/detour
+- Support URL: https://github.com/mathieumaf/detour/issues
+- Privacy policy URL (Privacy tab): https://github.com/mathieumaf/detour/blob/main/PRIVACY.md
 
 ---
 
 ## Firefox Add-ons (AMO)
 
-### Name (max 50)
-Detour — Proxy Switcher
+### Name (max 50, keep it equal to the package name)
+Detour
 
 ### Summary (max 250)
 A simple, intuitive proxy switcher. Save and switch HTTP, HTTPS, or SOCKS
@@ -92,6 +101,13 @@ auto-switch rules, health checks, failover, bypass, and SwitchyOmega import. No
 data collection.
 
 ### Description
+AMO renders the description as Markdown, so every `*` that is meant literally
+is escaped as `\*`. Without it, the text between two `*.example.com` turns
+italic. Keep the backslashes when you paste. AMO still links `example.com`;
+backticks do not prevent it, because AMO does not support inline code.
+The lines here are wrapped for reading: in the dashboard, each paragraph and
+each bullet is a single line.
+
 Detour is a simple, intuitive proxy switcher. Save configurations as named
 profiles, switch the active one from the toolbar, and toggle it on or off — no
 digging through system settings.
@@ -105,11 +121,11 @@ Features:
   Firefox supports natively.
 - Auto-switch rules: an ordered list that sends matching hosts through a
   chosen profile or Direct. First match wins; everything else uses the active
-  profile. Match an exact host, *.example.com, <local>, <private>, or a CIDR
+  profile. Match an exact host, \*.example.com, <local>, <private>, or a CIDR
   such as 10.0.0.0/8.
 - Bypass list: choose hosts that connect directly, skipping the selected
   proxy. Use <local> for localhost, <private> for all private networks,
-  *.example.com for subdomains, or 10.0.0.0/8 for an IP range.
+  \*.example.com for subdomains, or 10.0.0.0/8 for an IP range.
 - Built-in connection test that reports your exit IP and latency before you
   commit.
 - Optional health checks while the proxy is active. After repeated failures,
@@ -141,32 +157,27 @@ never sent to us or anyone else. Detour is open source.
    rules, health checks and failover, keyboard shortcuts, SwitchyOmega import,
    bypass lists, and no data collection.
 
-### Categories
-Privacy & Security / Other
+### Category
+Privacy & Security
+
+### Links
+- Homepage: https://github.com/mathieumaf/detour
+- Support site: https://github.com/mathieumaf/detour/issues
+- Support email: detour@mafille.me
+
+### Privacy policy
+Paste [PRIVACY.md](../PRIVACY.md) again whenever it changes, as plain text: drop
+the repo-only comment and the Markdown marks (`#`, `**`, backticks), put each
+paragraph and bullet on one line, and add "The full policy is also published
+at:" followed by the file's GitHub URL before the Contact section.
 
 ---
 
-## Permission justifications (for store review)
+## Permissions and privacy
 
-Reviewers ask why each permission is needed. Reuse these verbatim. CWS
-Privacy-tab paste text (including the accepted `alarms` justification) is in
-[permissions.md](permissions.md).
-
-- **proxy** — core feature: apply and release the proxy configuration.
-- **storage** — persist the user's proxy profiles, routing rules, and active
-  selection and health-check settings locally between sessions.
-- **alarms** — Used to schedule periodic health checks of the active proxy.
-  When the user enables health checks, Detour uses chrome.alarms to re-test
-  the proxy on the interval they chose and, after repeated failures, switch
-  to one fallback profile or Direct.
-- **webRequest** — detect proxy authentication challenges (onAuthRequired).
-- **webRequestAuthProvider** (Chromium) / **webRequestBlocking** (Firefox) —
-  supply the saved username/password in response to a proxy auth challenge.
-- **host permissions `<all_urls>`** — the proxy routes traffic for every site,
-  and auth challenges can originate from any request, so access is not limited
-  to a specific host.
-
-Data collection: none. (AMO data-collection disclosure: "No data collected".)
+The Chrome Web Store's Privacy tab (single purpose, permission justifications,
+data usage) is in [permissions.md](permissions.md). Firefox Add-ons takes its
+data disclosure from the manifest: no data collected.
 
 ---
 
