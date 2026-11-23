@@ -90,7 +90,7 @@ Privacy & Security
 
 ## Firefox Add-ons (AMO)
 
-### Name (max 50)
+### Name (max 50, keep it equal to the package name)
 Detour
 
 ### Summary (max 250)
@@ -162,6 +162,10 @@ Privacy & Security
 - Homepage: https://github.com/mathieumaf/detour
 - Support site: https://github.com/mathieumaf/detour/issues
 - Support email: detour@mafille.me
+
+### Privacy policy
+Paste the text of [PRIVACY.md](../PRIVACY.md) without its repo-only comment,
+and paste it again whenever that file changes.
 
 ---
 
