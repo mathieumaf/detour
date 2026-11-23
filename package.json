@@ -3,7 +3,7 @@
   "description": "Switch HTTP, HTTPS, or SOCKS proxy profiles from your toolbar, with auto-switch rules, health checks, failover, auth, and bypass.",
   "private": true,
   "license": "MIT",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "type": "module",
   "packageManager": "bun@1.4.5",
   "engines": {
