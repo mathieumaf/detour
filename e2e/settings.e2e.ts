@@ -351,6 +351,11 @@ describe(`settings and popup (${BROWSER})`, () => {
 
     await waitForText(settings, 'Not a valid JSON file.');
     expect((await stored()).profiles.map((item) => item.name)).toEqual(['Office']);
+
+    // Valid JSON with no proxy config in it is refused the same way.
+    await chooseFile(settings, 'package.json', JSON.stringify({ hello: 'world' }));
+    await waitForText(settings, 'No proxy config found in this file.');
+    expect((await stored()).profiles.map((item) => item.name)).toEqual(['Office']);
     await settings.close();
   });
 });
