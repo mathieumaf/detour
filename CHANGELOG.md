@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.2](https://github.com/mathieumaf/detour/compare/detour-v1.7.1...detour-v1.7.2) (2026-11-23)
+
+
+### Bug Fixes
+
+* **deps:** bump vue ([#82](https://github.com/mathieumaf/detour/issues/82)) ([063be54](https://github.com/mathieumaf/detour/commit/063be54ea3e178510ca4f4d72494707ceaa5f86c))
+* **import:** refuse a JSON file with no proxy config instead of wiping the configuration ([#89](https://github.com/mathieumaf/detour/issues/89)) ([9348472](https://github.com/mathieumaf/detour/commit/93484724ce4c64e11fcbed0ee57bf5e925df8ba2)), closes [#84](https://github.com/mathieumaf/detour/issues/84)
+
 ## [1.7.1](https://github.com/mathieumaf/detour/compare/detour-v1.7.0...detour-v1.7.1) (2026-10-23)
 
 
