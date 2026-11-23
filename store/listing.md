@@ -103,7 +103,8 @@ data collection.
 ### Description
 AMO renders the description as Markdown, so every `*` that is meant literally
 is escaped as `\*`. Without it, the text between two `*.example.com` turns
-italic and `example.com` becomes a link. Keep the backslashes when you paste.
+italic. Keep the backslashes when you paste. AMO still links `example.com`;
+backticks do not prevent it, because AMO does not support inline code.
 The lines here are wrapped for reading: in the dashboard, each paragraph and
 each bullet is a single line.
 
@@ -165,8 +166,10 @@ Privacy & Security
 - Support email: detour@mafille.me
 
 ### Privacy policy
-Paste the text of [PRIVACY.md](../PRIVACY.md) without its repo-only comment,
-and paste it again whenever that file changes.
+Paste [PRIVACY.md](../PRIVACY.md) again whenever it changes, as plain text: drop
+the repo-only comment and the Markdown marks (`#`, `**`, backticks), put each
+paragraph and bullet on one line, and add "The full policy is also published
+at:" followed by the file's GitHub URL before the Contact section.
 
 ---
 
