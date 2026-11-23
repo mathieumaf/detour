@@ -4,8 +4,9 @@ Single source of truth for the Chrome Web Store and Firefox Add-ons (AMO)
 listings. Keep both stores in sync by editing here first, then copy each field
 into the dashboard. Character limits are noted per field — stay within them.
 
-The name and the Chrome summary come from the package (`wxt.config.ts`), so they
-change only with a release. Everything else is edited in the dashboards.
+On the Chrome Web Store, the name and the summary come from the package
+(`wxt.config.ts`), so they change only with a release. Everything else,
+including the AMO name, is edited in the dashboards.
 
 ---
 

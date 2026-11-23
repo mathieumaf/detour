@@ -25,7 +25,7 @@ Detour's core function is to route the browser's traffic through a user-configur
 
 ### storage
 
-Used to save the user's proxy profiles (scheme, host, port, optional credentials, and bypass list), routing rules, health-check settings and status, the active profile, and the on/off state in chrome.storage.local, so they persist between sessions and stay in sync between the popup, the settings page, and the background service worker. The stored data stays on the user's device and is never sent to the developer or any third party; saved credentials are only given to the proxy that asks for them.
+Used to save the user's proxy profiles (scheme, host, port, optional credentials, and bypass list), routing rules, health-check settings and status, the active profile, and the on/off state in chrome.storage.local, so they persist between sessions and stay in sync between the popup, the settings page, and the background service worker. Saved credentials leave the device only to answer the proxy that asks for them; everything else stays on the device. None of it is sent to the developer.
 
 ### alarms
 
